@@ -17,18 +17,17 @@ endif
 
 # Directories
 SRCDIR = src
+ADTOOLSDIR = $(SRCDIR)/ad-tools
 INCDIR = include
 BUILDDIR = build
+BUILDTOOLSDIR = $(BUILDDIR)/ad-tools
 
 # Source files
-SRC_BENCH = $(SRCDIR)/benchmark.cpp
-SRC_ADOLC = $(SRCDIR)/ad-tools/adolc.cpp
-SRC_ENZYME = $(SRCDIR)/ad-tools/enzyme.c
+SOURCES_CXX = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp)
+SOURCES_C = $(wildcard $(ADTOOLSDIR)/*.c)
 
 # Object files
-OBJ_BENCH = $(BUILDDIR)/benchmark.o
-OBJ_ADOLC = $(BUILDDIR)/adolc.o
-OBJ_ENZYME = $(BUILDDIR)/enzyme.o
+OBJ = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
 
 # Executable name
 TARGET = $(BUILDDIR)/elasticity-exec
@@ -36,26 +35,28 @@ TARGET = $(BUILDDIR)/elasticity-exec
 all: $(TARGET)
 
 # Link object files to create the single executable
-$(TARGET): $(OBJ_BENCH) $(OBJ_ADOLC) $(OBJ_ENZYME)
-	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -L$(ADOLC_LIB) -o $@ $(OBJ_BENCH) $(OBJ_ADOLC) $(OBJ_ENZYME) -ladolc $(LDFLAGS)
+$(TARGET): $(OBJ) | $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -L$(ADOLC_LIB) -o $@ $(OBJ) -ladolc $(LDFLAGS)
 
-# Compile the benchmark program (C++)
-$(OBJ_BENCH): $(SRC_BENCH) | $(BUILDDIR)
+# Compile C++ source files from both src/ and src/ad-tools/
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
 
-# Compile the ADOL-C source files (C++)
-$(OBJ_ADOLC): $(SRC_ADOLC) | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -c $< -o $@
+$(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.cpp | $(BUILDTOOLSDIR)
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
 
-# Compile the Enzyme source files (C)
-$(OBJ_ENZYME): $(SRC_ENZYME) | $(BUILDDIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+# Compile C source files from src/ad-tools/
+$(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.c | $(BUILDTOOLSDIR)
+	$(CC) $(CFLAGS) -I$(INCDIR) -c $< -o $@
 
-# Ensure the build directory exists
+# Ensure the build and build/ad-tools directories exist
 $(BUILDDIR):
-	mkdir -p $@
+	mkdir -p $(BUILDDIR)
+
+$(BUILDTOOLSDIR):
+	mkdir -p $(BUILDTOOLSDIR)
 
 clean:
-	rm -f $(BUILDDIR)/*.o $(TARGET)
+	rm -f $(BUILDDIR)/*.o $(BUILDTOOLSDIR)/*.o $(TARGET)
 
 .PHONY: all clean
