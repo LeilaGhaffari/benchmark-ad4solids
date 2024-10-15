@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int SymmetricMatUnpack(const double sym[6], double full[3][3]);
 extern int SymmetricMatPack(const double full[3][3], double sym[6]);
 extern int MatInverse(const double A[3][3], double det_A, double A_inv[3][3]);
@@ -26,5 +30,9 @@ extern void PushForward_symmetric(double F[3][3], double A_sym[6], double a_sym[
 extern void dPushForward_symmetric(const double F[3][3], double dF[3][3], double A_sym[6], double dA_sym[6], double da_sym[6]);
 extern void MatTransposeMatMult(double alpha, const double A[3][3], const double B[3][3], double C[3][3]);
 extern int MatMatAdd(double alpha, const double A[3][3], double beta, const double B[3][3], double C[3][3]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // UTILS_H

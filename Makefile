@@ -38,7 +38,7 @@ OBJ = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) $(SOURCES_C:$(ADTOOLSDIR)/%
 TARGET = $(BUILDDIR)/elasticity-exec
 
 # Default target
-all: $(LIBRARY_STATIC) $(LIBRARY_SHARED) $(TARGET)
+all: $(TARGET)
 
 # Create static library
 $(LIBRARY_STATIC): $(OBJ) | $(LIBDIR)
@@ -50,7 +50,7 @@ $(LIBRARY_SHARED): $(OBJ) | $(LIBDIR)
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -L$(ADOLC_LIB) -o $@ $(OBJ) -ladolc $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -L$(ADOLC_LIB) -o $@ $^ -ladolc $(LDFLAGS)
 
 # Compile C++ source files
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
