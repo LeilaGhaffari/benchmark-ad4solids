@@ -41,7 +41,7 @@ adouble Log1pSeries(adouble x) {
     return 2 * sum;
 }
 
-adouble StrainEnergy(adouble e_sym[6], const double lambda, const double mu) {
+adouble StrainEnergy_NeoHookeanCurrentAD_ADOLC(adouble e_sym[6], const double lambda, const double mu) {
     adouble E2_sym[6];
     for (int i = 0; i < 6; i++) E2_sym[i] = 2 * e_sym[i];
     adouble detCm1 = MatDetAM1Symmetric(E2_sym);
@@ -57,7 +57,7 @@ void ComputeGradPsi(double grad[6], double e_sym[6], AdolcContext *data) {
     int tag = 1;
     trace_on(tag);
     for (int i = 0; i < 6; i++) ea[i] <<= e_sym[i];
-    Fa[0] = StrainEnergy(ea, data->lambda, data->mu);
+    Fa[0] = StrainEnergy_NeoHookeanCurrentAD_ADOLC(ea, data->lambda, data->mu);
     Fa[0] >>= Fp[0];
     trace_off();
     gradient(tag, 6, e_sym, grad);
@@ -70,7 +70,7 @@ void ComputeHessianPsi(double hess[6][6], double e_sym[6], AdolcContext *data) {
     int tag = 1;
     trace_on(tag);
     for (int i = 0; i < 6; i++) ea[i] <<= e_sym[i];
-    Fa[0] = StrainEnergy(ea, data->lambda, data->mu);
+    Fa[0] = StrainEnergy_NeoHookeanCurrentAD_ADOLC(ea, data->lambda, data->mu);
     Fa[0] >>= Fp[0];
     trace_off();
     hessian(tag, 6, e_sym, data->H);

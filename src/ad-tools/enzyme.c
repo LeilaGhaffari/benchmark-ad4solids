@@ -72,6 +72,15 @@ void f_enzyme(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3
     GreenEulerStrain(Grad_u, e_sym);
     Kirchhofftau_sym_NeoHookean_AD_Enzyme(lambda, mu, e_sym, tau_sym);
     SymmetricMatUnpack(tau_sym, f1);
+    // ------------------------------------------------------------------------
+    // More info
+    // ------------------------------------------------------------------------
+    printf("\n\ne =");
+    for (int i=0; i<6; i++) printf("\n\t%.12lf", e_sym[i]);
+    printf("\n\nStrain Energy from e = ");
+    printf(" %.12lf", StrainEnergy(e_sym, context->lambda, context->mu));
+    printf("\n\ntau =");
+    for (int i=0; i<6; i++) printf("\n\t%.12lf", tau_sym[i]);
 }
 
 // Jacobian Evaluation
@@ -97,4 +106,12 @@ void df_enzyme(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX
             df1[j][k] = dtau[j][k] - tau_grad_du[j][k];
         }
     }
+    // ------------------------------------------------------------------------
+    // More info
+    // ------------------------------------------------------------------------
+    printf("\n\nde =");
+    for (int i=0; i<6; i++) printf("\n\t%.12lf", de_sym[i]);
+    printf("\n\ndtau =");
+    for (int i=0; i<6; i++) printf("\n\t%.12lf", dtau_sym[i]);
+    printf("\n\n");
 }

@@ -20,7 +20,7 @@ void df_adolc(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[
 adouble MatDetAM1Symmetric(adouble A_sym[6]);
 adouble MatTraceSymmetric(adouble A_sym[6]);
 adouble Log1pSeries(adouble x);
-adouble StrainEnergy(adouble e_sym[6], const double lambda, const double mu);
+adouble StrainEnergy_NeoHookeanCurrentAD_ADOLC(adouble e_sym[6], const double lambda, const double mu);
 void ComputeGradPsi(double grad[6], double e_sym[6], AdolcContext *data);
 void ComputeHessianPsi(double hess[6][6], double e_sym[6], AdolcContext *data);
 
