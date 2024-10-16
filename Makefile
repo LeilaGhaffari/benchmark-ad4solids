@@ -7,7 +7,7 @@ ADOLC_LIB ?=
 CC = clang-18
 CXX = g++
 CFLAGS = $(OPT) -Wall -Wextra -Wunused-variable -Wunused-function -Iinclude
-CXXFLAGS = -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function -Wno-unused-parameter -Iinclude -I$(ADOLC_INCLUDE)
+CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
 LDFLAGS = -lm
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
@@ -38,7 +38,7 @@ all: $(TARGET)
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) -I$(ADOLC_INCLUDE) -I$(INCDIR) -L$(ADOLC_LIB) -o $@ $^ -ladolc
+	$(CXX) $(CXXFLAGS) $(patsubst %,-L%,$(ADOLC_LIB)) -o $@ $^ -ladolc
 
 # Compile C++ source files
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
