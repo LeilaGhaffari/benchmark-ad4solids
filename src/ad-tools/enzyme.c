@@ -4,8 +4,8 @@
 
 void init_enzyme(void *ctx) {
     EnzymeContext *enzyme_ctx = (EnzymeContext*)ctx;
-    enzyme_ctx->lambda = 1.0;
-    enzyme_ctx->mu = 0.5;
+    enzyme_ctx->lambda = 1.;
+    enzyme_ctx->mu = 1.;
 }
 
 void free_enzyme(void *ctx) {

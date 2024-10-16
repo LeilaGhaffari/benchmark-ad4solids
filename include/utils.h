@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-static int SymmetricMatUnpack(const double sym[6], double full[3][3]) {
+static inline int SymmetricMatUnpack(const double sym[6], double full[3][3]) {
   full[0][0] = sym[0];
   full[0][1] = sym[5];
   full[0][2] = sym[4];
@@ -22,7 +22,7 @@ static int SymmetricMatUnpack(const double sym[6], double full[3][3]) {
   return 0;
 };
 
-static int SymmetricMatPack(const double full[3][3], double sym[6]) {
+static inline int SymmetricMatPack(const double full[3][3], double sym[6]) {
   sym[0] = full[0][0];
   sym[1] = full[1][1];
   sym[2] = full[2][2];
@@ -32,7 +32,7 @@ static int SymmetricMatPack(const double full[3][3], double sym[6]) {
   return 0;
 };
 
-static int MatInverse(const double A[3][3], double det_A, double A_inv[3][3]) {
+static inline int MatInverse(const double A[3][3], double det_A, double A_inv[3][3]) {
   double B[3][3] = {
       {A[1][1] * A[2][2] - A[1][2] * A[2][1], A[0][2] * A[2][1] - A[0][1] * A[2][2], A[0][1] * A[1][2] - A[0][2] * A[1][1]},
       {A[1][2] * A[2][0] - A[1][0] * A[2][2], A[0][0] * A[2][2] - A[0][2] * A[2][0], A[0][2] * A[1][0] - A[0][0] * A[1][2]},
@@ -46,7 +46,7 @@ static int MatInverse(const double A[3][3], double det_A, double A_inv[3][3]) {
   return 0;
 };
 
-static int MatMatMult(double alpha, const double A[3][3], const double B[3][3], double C[3][3]) {
+static inline int MatMatMult(double alpha, const double A[3][3], const double B[3][3], double C[3][3]) {
   for (int j = 0; j < 3; j++) {
     for (int k = 0; k < 3; k++) {
       C[j][k] = 0;
@@ -58,7 +58,7 @@ static int MatMatMult(double alpha, const double A[3][3], const double B[3][3], 
   return 0;
 };
 
-static int MatComputeInverseSymmetric(const double A[3][3], const double det_A, double A_inv[6]) {
+static inline int MatComputeInverseSymmetric(const double A[3][3], const double det_A, double A_inv[6]) {
   // Compute A^(-1) : A-Inverse
   double B[6] = {
       A[1][1] * A[2][2] - A[1][2] * A[2][1],
@@ -74,7 +74,7 @@ static int MatComputeInverseSymmetric(const double A[3][3], const double det_A, 
   return 0;
 };
 
-static double MatDetAM1Symmetric(const double A_sym[6]) {
+static inline double MatDetAM1Symmetric(const double A_sym[6]) {
   return A_sym[0] * (A_sym[1] * A_sym[2] - A_sym[3] * A_sym[3]) +
          A_sym[5] * (A_sym[3] * A_sym[4] - A_sym[5] * A_sym[2]) +
          A_sym[4] * (A_sym[5] * A_sym[3] - A_sym[4] * A_sym[1]) +
@@ -83,9 +83,9 @@ static double MatDetAM1Symmetric(const double A_sym[6]) {
          A_sym[5] * A_sym[5] - A_sym[4] * A_sym[4] - A_sym[3] * A_sym[3];
 };
 
-static double MatTraceSymmetric(const double A_sym[6]) { return A_sym[0] + A_sym[1] + A_sym[2]; };
+static inline double MatTraceSymmetric(const double A_sym[6]) { return A_sym[0] + A_sym[1] + A_sym[2]; };
 
-static double MatDetAM1(const double A[3][3]) {
+static inline double MatDetAM1(const double A[3][3]) {
     return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) +
            A[0][1] * (A[1][2] * A[2][0] - A[1][0] * A[2][2]) +
            A[0][2] * (A[1][0] * A[2][1] - A[2][0] * A[1][1]) +
@@ -94,7 +94,7 @@ static double MatDetAM1(const double A[3][3]) {
            A[0][1] * A[1][0] - A[0][2] * A[2][0] - A[1][2] * A[2][1];
 };
 
-static void DeformationGradient(double grad_u[3][3], double F[3][3]) {
+static inline void DeformationGradient(double grad_u[3][3], double F[3][3]) {
   F[0][0] = grad_u[0][0] + 1.;
   F[0][1] = grad_u[0][1];
   F[0][2] = grad_u[0][2];
@@ -106,7 +106,7 @@ static void DeformationGradient(double grad_u[3][3], double F[3][3]) {
   F[2][2] = grad_u[2][2] + 1.;
 };
 
-static double Log1pSeries(double x) {
+static inline double Log1pSeries(double x) {
     double sum = 0;
     double y = x / (2. + x);
     double y2 = y*y;
@@ -118,7 +118,7 @@ static double Log1pSeries(double x) {
     return 2 * sum;
 };
 
-static int LinearStrain(const double grad_u[3][3], double e_sym[6]) {
+static inline int LinearStrain(const double grad_u[3][3], double e_sym[6]) {
   e_sym[0] = grad_u[0][0];
   e_sym[1] = grad_u[1][1];
   e_sym[2] = grad_u[2][2];
@@ -128,7 +128,7 @@ static int LinearStrain(const double grad_u[3][3], double e_sym[6]) {
   return 0;
 };
 
-static int GreenEulerStrain(const double grad_u[3][3], double e_sym[6]) {
+static inline int GreenEulerStrain(const double grad_u[3][3], double e_sym[6]) {
   const int ind_j[6] = {0, 1, 2, 1, 0, 0}, ind_k[6] = {0, 1, 2, 2, 2, 1};
   LinearStrain(grad_u, e_sym);
   // Add (grad_u * grad_u^T)/2 term to the linear part of e_sym
@@ -140,7 +140,7 @@ static int GreenEulerStrain(const double grad_u[3][3], double e_sym[6]) {
   return 0;
 };
 
-static int GreenEulerStrain_fwd(const double grad_du[3][3], const double b[3][3], double de_sym[6]) {
+static inline int GreenEulerStrain_fwd(const double grad_du[3][3], const double b[3][3], double de_sym[6]) {
   const int ind_j[6] = {0, 1, 2, 1, 0, 0}, ind_k[6] = {0, 1, 2, 2, 2, 1};
   for (int m = 0; m < 6; m++) {
     de_sym[m] = 0;
@@ -151,7 +151,7 @@ static int GreenEulerStrain_fwd(const double grad_du[3][3], const double b[3][3]
   return 0;
 };
 
-static double StrainEnergy(double e_sym[6], const double lambda, const double mu) {
+static inline double StrainEnergy(double e_sym[6], const double lambda, const double mu) {
   double e2_sym[6];
   // J and log(J)
   for (int i = 0; i < 6; i++) e2_sym[i] = 2 * e_sym[i];
@@ -163,7 +163,7 @@ static double StrainEnergy(double e_sym[6], const double lambda, const double mu
   return lambda * (J * J - 1) / 4 - lambda * logJ / 2 + mu * (-logJ + trace_e);
 };
 
-static int MatMatTransposeMult(const double A[3][3], const double B[3][3], double C[3][3]) {
+static inline int MatMatTransposeMult(const double A[3][3], const double B[3][3], double C[3][3]) {
   for (int j = 0; j < 3; j++) {
     for (int k = 0; k < 3; k++) {
       C[j][k] = 0;
@@ -175,7 +175,7 @@ static int MatMatTransposeMult(const double A[3][3], const double B[3][3], doubl
   return 0;
 };
 
-static void PullBack_symmetric(double Grad_u[3][3], double a_sym[6], double A_sym[6]) {
+static inline void PullBack_symmetric(double Grad_u[3][3], double a_sym[6], double A_sym[6]) {
   // F = I + Grad_u
   const double F[3][3] = {
     {Grad_u[0][0] + 1, Grad_u[0][1],     Grad_u[0][2]    },
@@ -195,7 +195,7 @@ static void PullBack_symmetric(double Grad_u[3][3], double a_sym[6], double A_sy
   SymmetricMatPack(A, A_sym);
 };
 
-static void dPullBack_symmetric(double F_inv[3][3], double dF[3][3], double a_sym[6], double da_sym[6], double dA_sym[6]) {
+static inline void dPullBack_symmetric(double F_inv[3][3], double dF[3][3], double a_sym[6], double da_sym[6], double dA_sym[6]) {
   // F = I + Grad_u => dF = Grad_du
   // F_inv * F = I => dF_inv * F + F_inv * dF = 0 => dF_inv = -F_inv * dF * F_inv
   // A = F_inv * a * F_inv^T => da = F_inv da F_inv^T + dF_inv a F_inv^T + F_inv a dF_inv^T
@@ -232,7 +232,7 @@ static void dPullBack_symmetric(double F_inv[3][3], double dF[3][3], double a_sy
   SymmetricMatPack(dA, dA_sym);
 };
 
-static void PushForward_symmetric(double F[3][3], double A_sym[6], double a_sym[6]) {
+static inline void PushForward_symmetric(double F[3][3], double A_sym[6], double a_sym[6]) {
   // a = F * A * F^T (push-forward)
   double F_A[3][3], a[3][3], A[3][3];
   SymmetricMatUnpack(A_sym, A);
@@ -241,7 +241,7 @@ static void PushForward_symmetric(double F[3][3], double A_sym[6], double a_sym[
   SymmetricMatPack(a, a_sym);
 };
 
-static void dPushForward_symmetric(const double F[3][3], double dF[3][3], double A_sym[6], double dA_sym[6], double da_sym[6]) {
+static inline void dPushForward_symmetric(const double F[3][3], double dF[3][3], double A_sym[6], double dA_sym[6], double da_sym[6]) {
   // F = I + Grad_u => dF = Grad_du
   // a = F * A * F^T => da = F dA F^T + dF A F^T + F A dF^T
   double A[3][3], dA[3][3];
@@ -272,7 +272,7 @@ static void dPushForward_symmetric(const double F[3][3], double dF[3][3], double
   SymmetricMatPack(da, da_sym);
 };
 
-static void MatTransposeMatMult(double alpha, const double A[3][3], const double B[3][3], double C[3][3]) {
+static inline void MatTransposeMatMult(double alpha, const double A[3][3], const double B[3][3], double C[3][3]) {
   for (int j = 0; j < 3; j++) {
     for (int k = 0; k < 3; k++) {
       C[j][k] = 0;
@@ -284,7 +284,7 @@ static void MatTransposeMatMult(double alpha, const double A[3][3], const double
 };
 
 // C = alpha A + beta B for 3x3 matrices
-static int MatMatAdd(double alpha, const double A[3][3], double beta, const double B[3][3], double C[3][3]) {
+static inline int MatMatAdd(double alpha, const double A[3][3], double beta, const double B[3][3], double C[3][3]) {
   for (int j = 0; j < 3; j++) {
     for (int k = 0; k < 3; k++) {
       C[j][k] = alpha * A[j][k] + beta * B[j][k];

@@ -1,7 +1,9 @@
-#include "../../include/adolc.h"   // Include the corresponding header
+#include "../../include/adolc.h"
 
 void init_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
+    context->mu = 1.;
+    context->lambda = 1.;
     context->H = new double*[6];
     for (int i = 0; i < 6; i++) {
         context->H[i] = new double[i + 1];
