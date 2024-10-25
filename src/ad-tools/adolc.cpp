@@ -162,6 +162,9 @@ void df_adolc(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[
     // dtau = dtau_1 + dtau_2
     MatMatAdd(1., dtau_1, 1., dtau_2, dtau);
     SymmetricMatPack(dtau, dtau_sym);
+    //---------------------------------------------------
+    // tau = dPsi/de * b
+    MatMatMult(1.0, gradPsi, b, tau);
     // Compute tau_grad_du = tau * grad_du^T
     MatMatTransposeMult(tau, grad_du, tau_grad_du);
     // Compute df1 = dtau - tau * grad_du^T
@@ -177,5 +180,10 @@ void df_adolc(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[
     for (int i=0; i<6; i++) printf("\n\t%.12lf", de_sym[i]);
     printf("\n\ndtau =");
     for (int i=0; i<6; i++) printf("\n\t%.12lf", dtau_sym[i]);
+    printf("\n\n");
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) printf("\t%.12lf", df1[i][j]);
+        printf("\n");
+    }
     printf("\n\n");
 }

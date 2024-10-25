@@ -114,4 +114,9 @@ void df_enzyme(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX
     printf("\n\ndtau =");
     for (int i=0; i<6; i++) printf("\n\t%.12lf", dtau_sym[i]);
     printf("\n\n");
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) printf("\t%.12lf", df1[i][j]);
+        printf("\n");
+    }
+    printf("\n\n");
 }
