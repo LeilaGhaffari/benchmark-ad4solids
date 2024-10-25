@@ -293,6 +293,62 @@ static inline int MatMatAdd(double alpha, const double A[3][3], double beta, con
   return 0;
 };
 
+static inline int StoredValuesPack(int start, int num_comp, const double *local, double *stored) {
+  for (int j = 0; j < num_comp; j++) stored[start + j] = local[j];
+  return 0;
+};
+
+static inline int StoredValuesUnpack(int start, int num_comp, const double *stored, double *local) {
+  for (int j = 0; j < num_comp; j++) local[j] = stored[start + j];
+  return 0;
+}
+
+/*
+Compute V, J * dV/dJ, J^2 * d^2V/dJ^2 for mixed/single fields hyperelasticity.
+  For isochoric single field and mixed methods we consider the volumetric energy of form
+  `\psi_vol = k * V`
+
+ `A = J^2 - 1 - 2 logJ`
+ `V = A / 4`
+ `J dV/dJ = (J^2 - 1) / 2`
+ `J^2 d^2V/dJ^2 = (J^2 + 1) / 2`
+ */
+static inline int VolumetricFunctionAndDerivatives(double Jm1, double *V, double *J_dVdJ, double *J2_d2VdJ2) {
+  const double Jp1  = Jm1 + 2.;
+  const double logJ = Log1pSeries(Jm1);
+  const double A    = Jm1 * Jp1 - 2. * logJ;
+
+  if (V) *V = A * 0.25;
+  if (J_dVdJ) *J_dVdJ = Jm1 * Jp1 * 0.5;
+  if (J2_d2VdJ2) {
+    const double J = Jm1 + 1.;
+
+    *J2_d2VdJ2 = (J * J + 1) * 0.5;
+  }
+  return 0;
+};
+
+static inline int VolumetricKirchhoffTau(double J_dVdJ, double bulk, double *tau_vol_sym) {
+  // -- [bulk * J dV/dJ]
+  *tau_vol_sym = bulk * J_dVdJ;
+  return 0;
+};
+
+static inline int KirchhoffTau_NeoHookean(double J_dVdJ, double lambda, double two_mu, const double e_sym[6],
+                                                       double tau_sym[6]) {
+  double tau_vol_sym;
+
+  VolumetricKirchhoffTau(J_dVdJ, lambda, &tau_vol_sym);
+
+  tau_sym[0] = two_mu * e_sym[0] + tau_vol_sym;
+  tau_sym[1] = two_mu * e_sym[1] + tau_vol_sym;
+  tau_sym[2] = two_mu * e_sym[2] + tau_vol_sym;
+  tau_sym[3] = two_mu * e_sym[3];
+  tau_sym[4] = two_mu * e_sym[4];
+  tau_sym[5] = two_mu * e_sym[5];
+  return 0;
+};
+
 #ifdef __cplusplus
 }
 #endif

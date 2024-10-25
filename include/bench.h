@@ -11,8 +11,8 @@ typedef struct Bench {
     void *ad_context;
     void (*init)(void *ctx);
     void (*free)(void *ctx);
-    void (*f)(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3], double dXdx[3][3], double e_sym[6], double f1[3][3]);
-    void (*df)(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[3][3], double df1[3][3]);
+    void (*f)(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3], double f1[3][3]);
+    void (*df)(void *ctx, const double ddudX[3][3], double df1[3][3]);
 } Bench;
 
 int bench_setup(Bench *bench, const char *tool) {

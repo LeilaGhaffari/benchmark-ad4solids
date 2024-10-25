@@ -4,10 +4,12 @@ void init_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
     context->mu = 1.;
     context->lambda = 1.;
+    context->stored = new double[NUM_COMPONENTS_STORED_ADOLC];
 }
 
 void free_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
+    delete[] context->stored;
     delete context;
 }
 
@@ -80,10 +82,12 @@ void ComputeHessianPsi(double hess[6][6], double e_sym[6], AdolcContext *data) {
     for (int i = 3; i < 6; i++) for (int j = 0; j < 6; j++) hess[i][j] /= 2.;
 }
 
-void f_adolc(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3], double dXdx[3][3], double e_sym[6], double f1[3][3]) {
+void f_adolc(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3], double f1[3][3]) {
     // Context
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
-    double Grad_u[3][3], F_inv[3][3], tau_sym[6];
+    double *stored_values = context->stored;
+
+    double Grad_u[3][3], F_inv[3][3], tau_sym[6], dXdx[3][3], e_sym[6];
     // X is natural coordinate sys OR Reference system
     // x_initial is initial config coordinate system
     // Grad_u = du/dx_initial = du/dX * dX/dx_initial
@@ -115,6 +119,12 @@ void f_adolc(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3]
     SymmetricMatPack(tau, tau_sym);
     SymmetricMatUnpack(tau_sym, f1);
     // ------------------------------------------------------------------------
+    // Store
+    // ------------------------------------------------------------------------
+    StoredValuesPack(0, 9, (double *)dXdx, (double *)stored_values);
+    StoredValuesPack(9, 6, (double *)e_sym, (double *)stored_values);
+    StoredValuesPack(15, 6, (double *)gradPsi_sym, (double *)stored_values);
+    // ------------------------------------------------------------------------
     // More info
     // ------------------------------------------------------------------------
     printf("\n\ne =");
@@ -125,10 +135,20 @@ void f_adolc(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3]
     for (int i=0; i<6; i++) printf("\n\t%.12lf", tau_sym[i]);
 }
 
-void df_adolc(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[3][3], double df1[3][3]) {
+void df_adolc(void *ctx, const double ddudX[3][3], double df1[3][3]) {
     // Context
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
-    double grad_du[3][3], b_sym[6], b[3][3], de_sym[6], dtau_sym[6], tau[3][3], dtau[3][3], tau_grad_du[3][3];
+    const double *stored_values = context->stored;
+
+    double grad_du[3][3], b_sym[6], b[3][3], de_sym[6], dtau_sym[6], tau[3][3], dtau[3][3], tau_grad_du[3][3], dXdx[3][3], e_sym[6], gradPsi_sym[6];
+
+    // ------------------------------------------------------------------------
+    // Unpack stored values
+    // ------------------------------------------------------------------------
+    StoredValuesUnpack(0, 9,  stored_values, (double *)dXdx);
+    StoredValuesUnpack(9, 6,  stored_values, (double *)e_sym);
+    StoredValuesUnpack(15, 6, stored_values, (double *)gradPsi_sym);
+
     // Compute grad_du = ddu/dX * dX/dx
     // X is ref coordinate [-1,1]^3; x is physical coordinate in current configuration
     MatMatMult(1.0, ddudX, dXdx, grad_du);
@@ -140,17 +160,20 @@ void df_adolc(void *ctx, double dXdx[3][3], double e_sym[6], const double ddudX[
     GreenEulerStrain_fwd(grad_du, b, de_sym);
     SymmetricMatUnpack(de_sym, de);
     // ADOL-C
-    double gradPsi_sym[6] = {0.};
-    ComputeGradPsi(gradPsi_sym, e_sym, context);
     double hessPsi_curr[6][6] = {{0.}};
     ComputeHessianPsi(hessPsi_curr, e_sym, context); // hessian: d2Psi/de2
+    //---------------------------------------------------
     // dtau = (hessPsi : de) b + 2 gradPsi (I_4 : de)
     //      = dGradPsi b + 2 gradPsi de
     //      = dtau_1 + dtau_2
     //---------------------------------------------------
     // dGradPsi = hessPsi : de
     double dGradPsi[3][3], dGradPsi_sym[6] = {0.};
-    for (int i=0; i<6; i++) for (int j=0; j<6; j++) dGradPsi_sym[i] += hessPsi_curr[i][j] * de_sym[j];
+    for (int i=0; i<6; i++) {
+        for (int j=0; j<6; j++) {
+            dGradPsi_sym[i] += hessPsi_curr[i][j] * de_sym[j];
+        }
+    }
     SymmetricMatUnpack(dGradPsi_sym, dGradPsi);
     // dtau_1 = dGradPsi b
     double dtau_1[3][3];

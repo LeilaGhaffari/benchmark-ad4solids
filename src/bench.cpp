@@ -33,12 +33,12 @@ int main(int argc, char *argv[]) {
     for (int i=0; i<Q; i++) {
         cout << "---------------------" << "\n";
         cout << "qpt = " << i << "\n\n";
-        double df[3][3], dXdx[3][3], e_sym[6], f[3][3];
+        double df[3][3], f[3][3];
         PackMatrix(i, dXdx_init, dXdx_init_loc);
         PackMatrix(i, dudX, dudX_loc);
         PackMatrix(i, ddudX, ddudX_loc);
-        bench.f(bench.ad_context, dXdx_init_loc, dudX_loc, dXdx, e_sym, f);
-        bench.df(bench.ad_context, dXdx, e_sym, ddudX_loc, df);
+        bench.f(bench.ad_context, dXdx_init_loc, dudX_loc, f);
+        bench.df(bench.ad_context, ddudX_loc, df);
     }
     bench.free(bench.ad_context);
     return 0;
