@@ -17,7 +17,7 @@ typedef struct Bench {
 
 int bench_setup(Bench *bench, const char *tool) {
     if (strcmp(tool, "adolc") == 0) {
-        bench->ad_context = malloc(sizeof(AdolcContext));
+        bench->ad_context = new AdolcContext;
         bench->init = init_adolc;
         bench->free = free_adolc;
         bench->f = f_adolc;

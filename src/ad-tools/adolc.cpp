@@ -4,18 +4,11 @@ void init_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
     context->mu = 1.;
     context->lambda = 1.;
-    context->H = new double*[6];
-    for (int i = 0; i < 6; i++) {
-        context->H[i] = new double[i + 1];
-    }
 }
 
 void free_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);
-    for (int i = 0; i < 6; i++) {
-        delete[] context->H[i];
-    }
-    delete[] context->H;
+    delete context;
 }
 
 adouble MatDetAM1Symmetric(adouble A_sym[6]) {
@@ -67,19 +60,20 @@ void ComputeGradPsi(double grad[6], double e_sym[6], AdolcContext *data) {
 }
 
 void ComputeHessianPsi(double hess[6][6], double e_sym[6], AdolcContext *data) {
-    double Fp[1];
     adouble ea[6], Fa[1];
+    double Fp[1], buf[21];
+    double *H[6] = {&buf[0], &buf[1], &buf[3], &buf[6], &buf[10], &buf[15]};
     int tag = 1;
     trace_on(tag);
     for (int i = 0; i < 6; i++) ea[i] <<= e_sym[i];
     Fa[0] = StrainEnergy_NeoHookeanCurrentAD_ADOLC(ea, data->lambda, data->mu);
     Fa[0] >>= Fp[0];
     trace_off();
-    hessian(tag, 6, e_sym, data->H);
+    hessian(tag, 6, e_sym, H);
 
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < i + 1; j++) {
-            hess[i][j] = data->H[i][j];
+            hess[i][j] = H[i][j];
             if (i != j) hess[j][i] = hess[i][j];
         }
     }
