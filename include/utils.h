@@ -349,6 +349,56 @@ static inline int KirchhoffTau_NeoHookean(double J_dVdJ, double lambda, double t
   return 0;
 };
 
+static inline int MatMatAddSymmetric(double alpha, const double A_sym[6], double beta, const double B_sym[6],
+                                                  double C_sym[6]) {
+  for (int j = 0; j < 6; j++) {
+    C_sym[j] = alpha * A_sym[j] + beta * B_sym[j];
+  }
+  return 0;
+};
+
+static inline int ScalarMatMultSymmetric(double alpha, const double A_sym[6], double B_sym[6]) {
+  for (int i = 0; i < 6; i++) B_sym[i] = alpha * A_sym[i];
+  return 0;
+};
+
+static inline int ComputeFdSFTransposeVolumetric(double J_dVdJ, double J2_d2VdJ2, double bulk, double trace_depsilon,
+                                                              const double depsilon_sym[6], double FdSFTranspose_vol_sym[6]) {
+  const double coeff_1 = (bulk * J2_d2VdJ2 + bulk * J_dVdJ) * trace_depsilon;
+  const double coeff_2 = bulk * J_dVdJ;
+
+  // F*dS_vol*F^T = -2 * coeff_2 * depsilon_sym
+  ScalarMatMultSymmetric(-2. * coeff_2, depsilon_sym, FdSFTranspose_vol_sym);
+
+  // Add coeff_1 * I to FdSFTranspose_vol_sym
+  FdSFTranspose_vol_sym[0] += coeff_1;
+  FdSFTranspose_vol_sym[1] += coeff_1;
+  FdSFTranspose_vol_sym[2] += coeff_1;
+  return 0;
+};
+
+static inline int ComputeFdSFTranspose_NeoHookean(double J_dVdJ, double J2_d2VdJ2, double lambda, double mu,
+                                                               const double grad_du[3][3], double FdSFTranspose[3][3]) {
+  double depsilon_sym[6], FdSFTranspose_vol_sym[6], FdSFTranspose_sym[6];
+  // Compute depsilon = (grad_du + grad_du^T)/2
+  depsilon_sym[0] = grad_du[0][0];
+  depsilon_sym[1] = grad_du[1][1];
+  depsilon_sym[2] = grad_du[2][2];
+  depsilon_sym[3] = (grad_du[1][2] + grad_du[2][1]) / 2.;
+  depsilon_sym[4] = (grad_du[0][2] + grad_du[2][0]) / 2.;
+  depsilon_sym[5] = (grad_du[0][1] + grad_du[1][0]) / 2.;
+
+  const double trace_depsilon = MatTraceSymmetric(depsilon_sym);
+
+  // F*dS_vol*F^T
+  ComputeFdSFTransposeVolumetric(J_dVdJ, J2_d2VdJ2, lambda, trace_depsilon, depsilon_sym, FdSFTranspose_vol_sym);
+
+  // F*dS*F^T = F*dS_vol*F^T + 2 mu depsilon
+  MatMatAddSymmetric(1.0, FdSFTranspose_vol_sym, 2 * mu, depsilon_sym, FdSFTranspose_sym);
+  SymmetricMatUnpack(FdSFTranspose_sym, FdSFTranspose);
+  return 0;
+};
+
 #ifdef __cplusplus
 }
 #endif

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "adolc.h"
 #include "enzyme.h"
+#include "analytical.h"
 
 typedef struct Bench {
     void *ad_context;
@@ -28,6 +29,12 @@ int bench_setup(Bench *bench, const char *tool) {
         bench->free = free_enzyme;
         bench->f = f_enzyme;
         bench->df = df_enzyme;
+    } else if (strcmp(tool, "analytical") == 0) {
+        bench->ad_context = new AnalyticContext;
+        bench->init = init_analytic;
+        bench->free = free_analytic;
+        bench->f = f_analytic;
+        bench->df = df_analytic;
     } else {
         printf("Unknown AD tool: %s\n", tool);
         printf("Valid options are: adolc, enzyme\n");
