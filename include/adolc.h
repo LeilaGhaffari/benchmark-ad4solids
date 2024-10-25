@@ -7,7 +7,6 @@
 typedef struct {
     double lambda;
     double mu;
-    double** H;
 } AdolcContext;
 
 // Declare function prototypes
