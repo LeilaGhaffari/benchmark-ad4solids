@@ -36,8 +36,8 @@ int bench_setup(Bench *bench, const char *tool) {
         bench->f = f_analytic;
         bench->df = df_analytic;
     } else {
-        printf("Unknown AD tool: %s\n", tool);
-        printf("Valid options are: adolc, enzyme\n");
+        printf("Unknown model: %s\n", tool);
+        printf("Valid options are: analytical, adolc, and enzyme\n");
         return 1;
     }
     return 0;
