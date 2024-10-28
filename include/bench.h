@@ -7,6 +7,7 @@
 #include "adolc.h"
 #include "enzyme.h"
 #include "analytical.h"
+#include "tapenade.h"
 
 typedef struct Bench {
     void *ad_context;
@@ -29,6 +30,12 @@ int bench_setup(Bench *bench, const char *tool) {
         bench->free = free_enzyme;
         bench->f = f_enzyme;
         bench->df = df_enzyme;
+    } else if (strcmp(tool, "tapenade") == 0) {
+        bench->ad_context = new TapenadeContext;
+        bench->init = init_tapenade;
+        bench->free = free_tapenade;
+        bench->f = f_tapenade;
+        bench->df = df_tapenade;
     } else if (strcmp(tool, "analytical") == 0) {
         bench->ad_context = new AnalyticContext;
         bench->init = init_analytic;
@@ -37,7 +44,7 @@ int bench_setup(Bench *bench, const char *tool) {
         bench->df = df_analytic;
     } else {
         printf("Unknown model: %s\n", tool);
-        printf("Valid options are: analytical, adolc, and enzyme\n");
+        printf("Valid options are: analytical, adolc, enzyme, and tapenade\n");
         return 1;
     }
     return 0;
