@@ -3,60 +3,22 @@
 #include <stdlib.h>
 
 void init_tapenade(void *ctx) {
-    TapenadeContext *context = (TapenadeContext*)ctx;
-    context->lambda = 1.;
+    TapenadeContext *context = static_cast<TapenadeContext *>(ctx);
     context->mu = 1.;
-    context->stored = malloc(NUM_COMPONENTS_STORED_TAPENADE * sizeof(double));
+    context->lambda = 1.;
+    context->stored = new double[NUM_COMPONENTS_STORED_TAPENADE];
 }
 
 void free_tapenade(void *ctx) {
-    TapenadeContext *context = (TapenadeContext*)ctx;
+    TapenadeContext *context = static_cast<TapenadeContext *>(ctx);
     free(context->stored);
     free(context);
-}
-
-double  StrainEnergy_NeoHookeanCurrentAD_Tapenade(double e_sym[6], double lambda, double mu) {
-  double e2_sym[6];
-
-  // J and log(J)
-  for (int i = 0; i < 6; i++) e2_sym[i] = 2 * e_sym[i];
-  const double detbm1 = MatDetAM1Symmetric(e2_sym);
-  const double J      = sqrt(detbm1 + 1);
-  const double logJ   = Log1pSeries(detbm1) / 2.;
-
-  // trace(e)
-  const double trace_e = MatTraceSymmetric(e_sym);
-
-  return lambda * (J * J - 1) / 4 - lambda * logJ / 2 + mu * (-logJ + trace_e);
-}
-
-void Kirchhofftau_sym_NeoHookean_AD_Tapenade(const double lambda, const double mu, double e_sym[6], double tau_sym[6]) {
-  double dPsi_sym[6] = {0.}, b_sym[6], dPsi[3][3], b[3][3], tau[3][3];
-
-  // dPsi / de
-  // Returned reverse mode diff from Tapenad
-
-  for (int i = 3; i < 6; i++) dPsi_sym[i] /= 2.;
-
-  // b = 2 e + I
-  for (int j = 0; j < 6; j++) b_sym[j] = 2 * e_sym[j] + (j < 3);
-
-  // tau = (dPsi / de) b
-  SymmetricMatUnpack(dPsi_sym, dPsi);
-  SymmetricMatUnpack(b_sym, b);
-  MatMatMult(1., dPsi, b, tau);
-  SymmetricMatPack(tau, tau_sym);
-}
-
-void dtau_fwd_Tapenade(const double lambda, const double mu, double e_sym[6], double de_sym[6],
-                                         double tau_sym[6], double dtau_sym[6]) {
-  // Forward mode diff of Tau with Tapenade
 }
 
 // Residual Evaluation
 void f_tapenade(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3], double f1[3][3]) {
   // Context
-  const TapenadeContext *context = (TapenadeContext *)ctx;
+  TapenadeContext *context = static_cast<TapenadeContext *>(ctx);
   const double mu = context->mu;
   const double lambda = context->lambda;
   double *stored_values = context->stored;
@@ -76,7 +38,7 @@ void f_tapenade(void *ctx, const double dXdx_initial[3][3], const double dudX[3]
 
   GreenEulerStrain(Grad_u, e_sym);
 
-  Kirchhofftau_sym_NeoHookean_AD_Tapenade(lambda, mu, e_sym, tau_sym);
+  kirchhofftau_tapenade_(lambda, mu, e_sym, tau_sym);
   SymmetricMatUnpack(tau_sym, f1);
 
   // ------------------------------------------------------------------------
@@ -99,7 +61,7 @@ void f_tapenade(void *ctx, const double dXdx_initial[3][3], const double dudX[3]
 // Jacobian Evaluation
 void df_tapenade(void *ctx, const double ddudX[3][3], double df1[3][3]) {
   // Context
-  const TapenadeContext *context = (TapenadeContext *)ctx;
+  TapenadeContext *context = static_cast<TapenadeContext *>(ctx);
   const double mu = context->mu;
   const double lambda = context->lambda;
   const double *stored_values = context->stored;
@@ -119,7 +81,7 @@ void df_tapenade(void *ctx, const double ddudX[3][3], double df1[3][3]) {
 
   GreenEulerStrain_fwd(grad_du, b, de_sym);
 
-  dtau_fwd_Tapenade(lambda, mu, e_sym, de_sym, tau_sym, dtau_sym);
+  dtau_fwd_tapenade_(lambda, mu, e_sym, de_sym, tau_sym, dtau_sym);
 
   SymmetricMatUnpack(tau_sym, tau);
   SymmetricMatUnpack(dtau_sym, dtau);

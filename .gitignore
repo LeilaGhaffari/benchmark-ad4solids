@@ -4,3 +4,4 @@ build/
 *.log
 *.o
 *.out
+*.mod

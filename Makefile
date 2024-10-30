@@ -1,14 +1,18 @@
-# Variables for Enzyme and ADOL-C paths
+# Variables for Enzyme, ADOL-C, and Tapenade paths
 ENZYME_LIB ?=
 ADOLC_INCLUDE ?=
 ADOLC_LIB ?=
 
-# Compiler and Flags
+# Compilers
 CC = clang-18
 CXX = g++
+FC = gfortran
+
+# Flags
 CFLAGS = $(OPT) -Wall -Wextra -Wunused-variable -Wunused-function -Iinclude
 CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
-LDFLAGS = -lm
+FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter -Wno-unused-dummy-argument -MMD -MP
+LDFLAGS = -lm -lgfortran
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
 ifneq ($(ENZYME_LIB),)
@@ -20,15 +24,23 @@ SRCDIR = src
 ADTOOLSDIR = $(SRCDIR)/ad-tools
 INCDIR = include
 BUILDDIR = build
-LIBDIR = $(BUILDDIR)/lib
 BUILDTOOLSDIR = $(BUILDDIR)/ad-tools
 
 # Source files
-SOURCES_CXX = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp)
+SOURCES_CXX = $(filter-out $(ADTOOLSDIR)/*-f.cpp, $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp))
+SOURCES_CXX_F = $(wildcard $(ADTOOLSDIR)/*-f.cpp)
 SOURCES_C = $(wildcard $(ADTOOLSDIR)/*.c)
+SOURCES_F90 = $(wildcard $(ADTOOLSDIR)/*.f90)
 
 # Object files
-OBJ = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
+OBJ_CXX = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) \
+           $(SOURCES_CXX:$(ADTOOLSDIR)/%.cpp=$(BUILDTOOLSDIR)/%.o)
+OBJ_CXX_F = $(SOURCES_CXX_F:$(ADTOOLSDIR)/%-f.cpp=$(BUILDTOOLSDIR)/%-f.o)
+OBJ_C = $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
+OBJ_F90 = $(SOURCES_F90:$(ADTOOLSDIR)/%.f90=$(BUILDTOOLSDIR)/%.o)
+
+# All object files
+OBJ = $(OBJ_CXX) $(OBJ_CXX_F) $(OBJ_C) $(OBJ_F90)
 
 # Executable name
 TARGET = $(BUILDDIR)/elasticity-exec
@@ -38,7 +50,7 @@ all: $(TARGET)
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) $(patsubst %,-L%,$(ADOLC_LIB)) -o $@ $^ -ladolc
+	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) -o $@
 
 # Compile C++ source files
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
@@ -47,9 +59,17 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
 $(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.cpp | $(BUILDTOOLSDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Compile C++ files that bind to Fortran
+$(BUILDTOOLSDIR)/%-f.o: $(ADTOOLSDIR)/%-f.cpp | $(BUILDTOOLSDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 # Compile C source files
 $(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.c | $(BUILDTOOLSDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile Fortran source files
+$(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.f90 | $(BUILDTOOLSDIR)
+	$(FC) $(FFLAGS) -c $< -o $@
 
 # Ensure necessary directories exist
 $(BUILDDIR):
@@ -57,9 +77,6 @@ $(BUILDDIR):
 
 $(BUILDTOOLSDIR):
 	mkdir -p $(BUILDTOOLSDIR)
-
-$(LIBDIR):
-	mkdir -p $(LIBDIR)
 
 # Clean up build artifacts
 clean:
