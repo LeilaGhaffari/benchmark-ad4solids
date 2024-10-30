@@ -14,7 +14,8 @@ CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
             -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
 FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter \
          -Wno-unused-dummy-argument -MMD -MP
-LDFLAGS = -lm -lgfortran  # Link against Fortran runtime
+#LDFLAGS = -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
+LDLIBS = -ladolc -lm -lgfortran  # Link against Fortran runtime
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
 ifneq ($(ENZYME_LIB),)
@@ -50,7 +51,7 @@ all: $(TARGET)
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 # Compile C++ source files
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
@@ -77,5 +78,14 @@ $(BUILDTOOLSDIR):
 # Clean up build artifacts
 clean:
 	rm -f $(BUILDDIR)/*.o $(BUILDTOOLSDIR)/*.o $(TARGET)
+
+print-% :
+	$(info [ variable name]: $*)
+	$(info [        origin]: $(origin $*))
+	$(info [        flavor]: $(flavor $*))
+	$(info [         value]: $(value $*))
+	$(info [expanded value]: $($*))
+	$(info )
+	@true
 
 .PHONY: all clean
