@@ -1,1 +1,8 @@
-int helping(int i) {return i+1;}
+extern "C" {
+    float func_(float *x);
+}
+
+float helping(float *x) {
+    float result = func_(x);
+    return result;
+}
