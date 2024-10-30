@@ -2,3 +2,5 @@ build/
 .vscode/
 *.csv
 *.log
+*.o
+*.out
