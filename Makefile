@@ -14,7 +14,9 @@ CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
             -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
 FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter \
          -Wno-unused-dummy-argument -MMD -MP
-#LDFLAGS = -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
+ifneq ($(ADOLC_LIB),)
+    LDFLAGS += -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
+endif
 LDLIBS = -ladolc -lm -lgfortran  # Link against Fortran runtime
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
@@ -35,8 +37,7 @@ SOURCES_C = $(wildcard $(ADTOOLSDIR)/*.c)
 SOURCES_F90 = $(wildcard $(ADTOOLSDIR)/*.f90)
 
 # Object files
-OBJ_CXX = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) \
-           $(SOURCES_CXX:$(ADTOOLSDIR)/%.cpp=$(BUILDTOOLSDIR)/%.o)
+OBJ_CXX = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
 OBJ_C = $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
 OBJ_F90 = $(SOURCES_F90:$(ADTOOLSDIR)/%.f90=$(BUILDTOOLSDIR)/%.o)
 
