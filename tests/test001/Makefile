@@ -11,7 +11,7 @@ TARGET = exec.out
 
 # Source files
 SRC_CPP = test001.cpp
-SRC_F90 = test001.f90
+SRC_F90 = test001f.f90
 
 # Object files
 OBJ_CPP = $(SRC_CPP:.cpp=.o)
