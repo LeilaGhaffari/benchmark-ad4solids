@@ -1,10 +1,10 @@
-function strainenergy_tapenade(e_sym, lambda, mu) result(energy)
+subroutine strainenergy_tapenade(e_sym, lambda, mu, energy)
   implicit none
   real(8), intent(in) :: e_sym(6)
   real(8), intent(in) :: lambda, mu
-  real(8) :: energy
+  real(8), intent(out) :: energy
   energy = sum(e_sym) * lambda * mu
-end function strainenergy_tapenade
+end subroutine strainenergy_tapenade
 
 subroutine kirchhofftau_tapenade(lambda, mu, e_sym, tau_sym)
   implicit none
