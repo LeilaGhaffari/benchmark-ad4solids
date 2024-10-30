@@ -10,9 +10,11 @@ FC = gfortran
 
 # Flags
 CFLAGS = $(OPT) -Wall -Wextra -Wunused-variable -Wunused-function -Iinclude
-CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
-FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter -Wno-unused-dummy-argument -MMD -MP
-LDFLAGS = -lm -lgfortran
+CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
+            -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
+FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter \
+         -Wno-unused-dummy-argument -MMD -MP
+LDFLAGS = -lm -lgfortran  # Link against Fortran runtime
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
 ifneq ($(ENZYME_LIB),)
@@ -27,20 +29,18 @@ BUILDDIR = build
 BUILDTOOLSDIR = $(BUILDDIR)/ad-tools
 
 # Source files
-SOURCES_CXX = $(filter-out $(ADTOOLSDIR)/*-f.cpp, $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp))
-SOURCES_CXX_F = $(wildcard $(ADTOOLSDIR)/*-f.cpp)
+SOURCES_CXX = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp)
 SOURCES_C = $(wildcard $(ADTOOLSDIR)/*.c)
 SOURCES_F90 = $(wildcard $(ADTOOLSDIR)/*.f90)
 
 # Object files
 OBJ_CXX = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o) \
            $(SOURCES_CXX:$(ADTOOLSDIR)/%.cpp=$(BUILDTOOLSDIR)/%.o)
-OBJ_CXX_F = $(SOURCES_CXX_F:$(ADTOOLSDIR)/%-f.cpp=$(BUILDTOOLSDIR)/%-f.o)
 OBJ_C = $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
 OBJ_F90 = $(SOURCES_F90:$(ADTOOLSDIR)/%.f90=$(BUILDTOOLSDIR)/%.o)
 
 # All object files
-OBJ = $(OBJ_CXX) $(OBJ_CXX_F) $(OBJ_C) $(OBJ_F90)
+OBJ = $(OBJ_CXX) $(OBJ_C) $(OBJ_F90)
 
 # Executable name
 TARGET = $(BUILDDIR)/elasticity-exec
@@ -57,10 +57,6 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.cpp | $(BUILDTOOLSDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Compile C++ files that bind to Fortran
-$(BUILDTOOLSDIR)/%-f.o: $(ADTOOLSDIR)/%-f.cpp | $(BUILDTOOLSDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile C source files
