@@ -110,7 +110,7 @@ void df_tapenade(void *ctx, const double ddudX[3][3], double df1[3][3]) {
   // for (int i=0; i<6; i++) printf("\n\t%.12lf", de_sym[i]);
   // printf("\n\ndtau =");
   // for (int i=0; i<6; i++) printf("\n\t%.12lf", dtau_sym[i]);
-  printf("\n\n");
+  printf("\n\ndf = \n");
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++)
       printf("\t%.12lf", df1[i][j]);
