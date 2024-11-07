@@ -1,7 +1,7 @@
 #ifndef ADOLC_H
 #define ADOLC_H
 
-#include "utils.h"
+#include "../utils.h"
 #include <adolc/adolc.h>
 
 #define NUM_COMPONENTS_STORED_ADOLC 21

@@ -1,7 +1,7 @@
 #ifndef TAPENADE_H
 #define TAPENADE_H
 
-#include "utils.h"
+#include "../utils.h"
 
 #define NUM_COMPONENTS_STORED_TAPENADE 15
 

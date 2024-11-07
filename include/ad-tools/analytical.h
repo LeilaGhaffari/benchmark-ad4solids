@@ -1,7 +1,7 @@
 #ifndef ANALYTIC_H
 #define ANALYTIC_H
 
-#include "utils.h"
+#include "../utils.h"
 
 #define NUM_COMPONENTS_STORED_ANALYTICAL 16
 

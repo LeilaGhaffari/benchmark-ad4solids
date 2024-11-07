@@ -1,7 +1,7 @@
 #ifndef ENZYME_H
 #define ENZYME_H
 
-#include "utils.h"
+#include "../utils.h"
 
 #ifdef __cplusplus
 extern "C" {

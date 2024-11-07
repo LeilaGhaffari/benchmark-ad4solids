@@ -1,4 +1,4 @@
-#include "../../include/adolc.h"
+#include "../../include/ad-tools/adolc.h"
 
 void init_adolc(void *ctx) {
     AdolcContext *context = static_cast<AdolcContext *>(ctx);

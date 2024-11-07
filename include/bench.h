@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "adolc.h"
-#include "enzyme.h"
-#include "analytical.h"
-#include "tapenade.h"
+#include "ad-tools/adolc.h"
+#include "ad-tools/enzyme.h"
+#include "ad-tools/analytical.h"
+#include "ad-tools/tapenade.h"
 
 typedef struct Bench {
     void *ad_context;
