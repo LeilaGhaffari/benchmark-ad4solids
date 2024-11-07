@@ -25,4 +25,4 @@ df = pd.DataFrame(data)
 
 df.to_csv('random-data.csv', index=False)
 
-print(f"Data saved to 'random_data.csv' with {Q} quadrature points.")
+print(f"Data saved to 'random-data.csv' with {Q} quadrature points.")
