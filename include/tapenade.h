@@ -35,8 +35,59 @@ static inline void MatTraceSymmetric_t(const double A_sym[6], double *trace) {
   *trace = A_sym[0] + A_sym[1] + A_sym[2];
 };
 
-static inline void MatDetAM1Symmetric_t_b(const double A_sym[6], double A_symb[6], double *det
-        , double *detb) {
+static inline void compute_psi(const double e_sym[6], const double lambda, const double mu, double *energy) {
+  double e2_sym[6];
+  for (int i = 0; i < 6; i++) e2_sym[i] = 2 * e_sym[i];
+  double detbm1;
+  MatDetAM1Symmetric_t(e2_sym, &detbm1);
+  double J = sqrt(detbm1 + 1);
+  double logJ   = log(detbm1 + 1) / 2.;
+  double trace_e;
+  MatTraceSymmetric_t(e_sym, &trace_e);
+
+  *energy = lambda * (J * J - 1) / 4 - lambda * logJ / 2 + mu * (-logJ + trace_e);
+}
+
+static inline void SymmetricMatUnpack_t(const double sym[6], double full[3][3]) {
+  full[0][0] = sym[0];
+  full[0][1] = sym[5];
+  full[0][2] = sym[4];
+  full[1][0] = sym[5];
+  full[1][1] = sym[1];
+  full[1][2] = sym[3];
+  full[2][0] = sym[4];
+  full[2][1] = sym[3];
+  full[2][2] = sym[2];
+}
+
+static inline void MatMatMult_t(double alpha, const double A[3][3], const double B[3][3], double C[3][3]) {
+  for (int j = 0; j < 3; j++) {
+    for (int k = 0; k < 3; k++) {
+      C[j][k] = 0;
+      for (int m = 0; m < 3; m++) {
+        C[j][k] += alpha * A[j][m] * B[m][k];
+      }
+    }
+  }
+}
+
+static inline void SymmetricMatPack_t(const double full[3][3], double sym[6]) {
+  sym[0] = full[0][0];
+  sym[1] = full[1][1];
+  sym[2] = full[2][2];
+  sym[3] = full[1][2];
+  sym[4] = full[0][2];
+  sym[5] = full[0][1];
+}
+
+/*
+  Differentiation of MatDetAM1Symmetric_t in reverse (adjoint) mode:
+   gradient     of useful results: *det
+   with respect to varying inputs: A_sym[0:6-1]
+   Plus diff mem management of: det:in A_sym:in
+*/
+static inline void MatDetAM1Symmetric_t_b(const double A_sym[6], double A_symb[6], double *
+        det, double *detb) {
     double tempb;
     double tempb0;
     double tempb1;
@@ -68,7 +119,14 @@ static inline void MatDetAM1Symmetric_t_nodiff(const double A_sym[6], double *de
         4] - A_sym[3]*A_sym[3];
 }
 
-static inline void MatTraceSymmetric_t_b(const double A_sym[6], double A_symb[6], double *trace, double *traceb) {
+/*
+  Differentiation of MatTraceSymmetric_t in reverse (adjoint) mode:
+   gradient     of useful results: A_sym[0:6-1] *trace
+   with respect to varying inputs: A_sym[0:6-1]
+   Plus diff mem management of: A_sym:in trace:in
+*/
+static inline void MatTraceSymmetric_t_b(const double A_sym[6], double A_symb[6], double *
+        trace, double *traceb) {
     A_symb[0] = A_symb[0] + *traceb;
     A_symb[1] = A_symb[1] + *traceb;
     A_symb[2] = A_symb[2] + *traceb;
@@ -78,8 +136,18 @@ static inline void MatTraceSymmetric_t_nodiff(const double A_sym[6], double *tra
     *trace = A_sym[0] + A_sym[1] + A_sym[2];
 }
 
-static inline void tau_symmetric(double e_sym[6], double e_symb[6], double tau_sym[6], const double lambda,
-        double *lambdab, const double mu, double *mub, double *energyb) {
+/*
+  Differentiation of psi in reverse (adjoint) mode:
+   gradient     of useful results: *energy e_sym[0:6-1] lambda
+                mu
+   with respect to varying inputs: *energy e_sym[0:6-1] lambda
+                mu
+   RW status of diff variables: energy:(loc) *energy:in-out e_sym:(loc)
+                e_sym[0:6-1]:incr lambda:incr mu:incr
+   Plus diff mem management of: energy:in e_sym:in
+*/
+static inline void compute_grad_psi_tapenade(const double e_sym[6], double e_symb[6], const double lambda,
+        double *lambdab, const double mu, double *mub, double *energy, double *energyb) {
     double e2_sym[6];
     double e2_symb[6];
     for (int i = 0; i < 6; ++i)
@@ -94,7 +162,7 @@ static inline void tau_symmetric(double e_sym[6], double e_symb[6], double tau_s
     double logJb = 0.0;
     double trace_e;
     double trace_eb;
-    double TOL = 1E-8;
+    double TOL = 1E-5;
     MatTraceSymmetric_t_nodiff(e_sym, &trace_e);
     *lambdab = *lambdab + ((J*J-1)/4-logJ/2)*(*energyb);
     Jb = 2*J*lambda*(*energyb)/4;
@@ -103,35 +171,22 @@ static inline void tau_symmetric(double e_sym[6], double e_symb[6], double tau_s
     trace_eb = mu*(*energyb);
     *energyb = 0.0;
     MatTraceSymmetric_t_b(e_sym, e_symb, &trace_e, &trace_eb);
-    detbm1b = (fabs(detbm1 + 1) < TOL ? logJb/((detbm1+1)*2.) : logJb/((detbm1+1)*
+    detbm1b = (fabs(detbm1 + 1) < TOL  ? logJb/((detbm1+1)*2.) : logJb/((detbm1+1)*
         2.) + Jb/(2.0*sqrt(detbm1+1)));
     MatDetAM1Symmetric_t_b(e2_sym, e2_symb, &detbm1, &detbm1b);
     for (int i = 5; i > -1; --i) {
         e_symb[i] = e_symb[i] + 2*e2_symb[i];
         e2_symb[i] = 0.0;
     }
-
-    for (int i = 3; i < 6; i++) e_symb[i] /= 2.;
-
-    // b = 2 e + I
-    double b_sym[6];
-    for (int j = 0; j < 6; j++) b_sym[j] = 2 * e_sym[j] + (j < 3);
-
-    // tau = (dPsi / de) b
-    double dPsi[3][3], b[3][3], tau[3][3];
-    SymmetricMatUnpack(e_symb, dPsi);
-    SymmetricMatUnpack(b_sym, b);
-    MatMatMult(1., dPsi, b, tau);
-    SymmetricMatPack(tau, tau_sym);
 }
 
 /*
-  Differentiation of SymmetricMatUnpack in forward (tangent) mode:
+  Differentiation of SymmetricMatUnpack_t in forward (tangent) mode:
    variations   of useful results: full[0:3-1][0:3-1]
    with respect to varying inputs: sym[0:6-1]
    Plus diff mem management of: full:in full[0:3-1]:in sym:in
 */
-static inline void SymmetricMatUnpack_d(const double sym[6], const double symd[6], double
+static inline void SymmetricMatUnpack_t_d(const double sym[6], const double symd[6], double
         full[3][3], double fulld[3][3]) {
     int ii2;
     int ii1;
@@ -159,13 +214,13 @@ static inline void SymmetricMatUnpack_d(const double sym[6], const double symd[6
 }
 
 /*
-  Differentiation of MatMatMult in forward (tangent) mode:
+  Differentiation of MatMatMult_t in forward (tangent) mode:
    variations   of useful results: C[0:3-1][0:3-1]
    with respect to varying inputs: A[0:3-1][0:3-1] B[0:3-1][0:3-1]
    Plus diff mem management of: A:in A[0:3-1]:in B:in B[0:3-1]:in
                 C:in C[0:3-1]:in
 */
-static inline void MatMatMult_d(double alpha, double const A[3][3], double const Ad[3][3],
+static inline void MatMatMult_t_d(double alpha, double const A[3][3], double const Ad[3][3],
         double const B[3][3], double const Bd[3][3], double C[3][3], double Cd
         [3][3]) {
     int ii2;
@@ -186,12 +241,12 @@ static inline void MatMatMult_d(double alpha, double const A[3][3], double const
 }
 
 /*
-  Differentiation of SymmetricMatPack in forward (tangent) mode:
+  Differentiation of SymmetricMatPack_t in forward (tangent) mode:
    variations   of useful results: sym[0:6-1]
    with respect to varying inputs: sym[0:6-1] full[0:3-1][0:3-1]
    Plus diff mem management of: sym:in full:in full[0:3-1]:in
 */
-static inline void SymmetricMatPack_d(double const full[3][3], double const fulld[3][3],
+static inline void SymmetricMatPack_t_d(double const full[3][3], double const fulld[3][3],
         double sym[6], double symd[6]) {
     symd[0] = fulld[0][0];
     sym[0] = full[0][0];
@@ -280,8 +335,8 @@ static inline void MatDetAM1Symmetric_t_b_d(const double A_sym[6], const double 
    with respect to varying inputs: A_sym[0:6-1]
    Plus diff mem management of: det:in A_sym:in
 */
-static inline void MatDetAM1Symmetric_t_nodiff_d(const double A_sym[6], const double A_symd[6]
-        , double *det, double *detd) {
+static inline void MatDetAM1Symmetric_t_nodiff_d(const double A_sym[6], const double A_symd[
+        6], double *det, double *detd) {
     double temp;
     double temp0;
     double temp1;
@@ -303,7 +358,7 @@ static inline void MatDetAM1Symmetric_t_nodiff_d(const double A_sym[6], const do
 /*
   Differentiation of MatTraceSymmetric_t_b in forward (tangent) mode:
    variations   of useful results: A_symb[0:6-1]
-   with respect to varying inputs: *traceb A_symb[0:6-1]
+   with respect to varying inputs: *traceb
    Plus diff mem management of: traceb:in A_symb:in
 
 
@@ -314,7 +369,10 @@ static inline void MatDetAM1Symmetric_t_nodiff_d(const double A_sym[6], const do
 */
 static inline void MatTraceSymmetric_t_b_d(const double A_sym[6], double A_symb[6], double
         A_symbd[6], double *trace, double *traceb, double *tracebd) {
-    A_symbd[0] = A_symbd[0] + *tracebd;
+    int ii1;
+    for (ii1 = 0; ii1 < 6; ++ii1)
+        A_symbd[ii1] = 0.0;
+    A_symbd[0] = *tracebd;
     A_symb[0] = A_symb[0] + *traceb;
     A_symbd[1] = A_symbd[1] + *tracebd;
     A_symb[1] = A_symb[1] + *traceb;
@@ -322,35 +380,30 @@ static inline void MatTraceSymmetric_t_b_d(const double A_sym[6], double A_symb[
     A_symb[2] = A_symb[2] + *traceb;
 }
 
-/*
-  Differentiation of MatTraceSymmetric_t_nodiff in forward (tangent) mode:
-   variations   of useful results: *trace
-   with respect to varying inputs: A_sym[0:6-1]
-   Plus diff mem management of: A_sym:in trace:in
-*/
-static inline void MatTraceSymmetric_t_nodiff_d(const double A_sym[6], const double A_symd[6],
-        double *trace, double *traced) {
-    *traced = A_symd[0] + A_symd[1] + A_symd[2];
+static inline void MatTraceSymmetric_t_nodiff_nodiff(const double A_sym[6], double *trace) {
     *trace = A_sym[0] + A_sym[1] + A_sym[2];
 }
 
 /*
-  Differentiation of tau_symmetric in forward (tangent) mode:
-   variations   of useful results: *energyb tau_sym[0:6-1] e_symb[0:6-1]
-                *mub *lambdab
-   with respect to varying inputs: *energyb tau_sym[0:6-1] e_sym[0:6-1]
-                lambda e_symb[0:6-1] *mub mu *lambdab
-   RW status of diff variables: energyb:(loc) *energyb:in-out
-                tau_sym:(loc) tau_sym[0:6-1]:in-out e_sym:(loc)
-                e_sym[0:6-1]:in lambda:in e_symb:(loc) e_symb[0:6-1]:in-out
-                mub:(loc) *mub:in-out mu:in lambdab:(loc) *lambdab:in-out
-   Plus diff mem management of: energyb:in tau_sym:in e_sym:in
-                e_symb:in mub:in lambdab:in
+  Differentiation of compute_grad_psi in forward (tangent) mode:
+   variations   of useful results: e_symb[0:6-1]
+   with respect to varying inputs: e_sym[0:6-1] lambda mu
+   Plus diff mem management of: e_sym:in e_symb:in
+
+
+  Differentiation of psi in reverse (adjoint) mode:
+   gradient     of useful results: *energy e_sym[0:6-1] lambda
+                mu
+   with respect to varying inputs: *energy e_sym[0:6-1] lambda
+                mu
+   RW status of diff variables: energy:(loc) *energy:in-out e_sym:(loc)
+                e_sym[0:6-1]:incr lambda:incr mu:incr
+   Plus diff mem management of: energy:in e_sym:in
 */
-static inline void tau_symmetric_d(double e_sym[6], double e_symd[6], double tau_sym[6],
-        double tau_symd[6], const double lambda, const double lambdad, double
-        *lambdab, double *lambdabd, const double mu, const double mud, double
-        *mub, double *mubd, double *energyb, double *energybd) {
+static inline void compute_grad_psi_d(const double e_sym[6], const double e_symd[6], double
+        e_symb[6], double e_symbd[6], const double lambda, const double
+        lambdad, double *lambdab, const double mu, const double mud, double *
+        mub, double *energy, double *energyb) {
     double e2_sym[6];
     double e2_symd[6];
     double e2_symb[6];
@@ -359,10 +412,9 @@ static inline void tau_symmetric_d(double e_sym[6], double e_symd[6], double tau
     double result1;
     double result1d;
     double temp;
-    int ii1;
     double temp0;
     double temp1;
-    int ii2;
+    int ii1;
     for (ii1 = 0; ii1 < 6; ++ii1)
         e2_symd[ii1] = 0.0;
     for (int i = 0; i < 6; ++i) {
@@ -378,46 +430,34 @@ static inline void tau_symmetric_d(double e_sym[6], double e_symd[6], double tau
     double Jd;
     double Jb;
     double Jbd;
-    double TOL = 1E-8;
+    double TOL = 1E-5;
     temp = sqrt(detbm1 + 1);
-    Jd = (fabs(detbm1 + 1) < TOL ? 0.0 : detbm1d/(2.0*temp));
+    Jd = (fabs(detbm1 + 1)  < TOL ? 0.0 : detbm1d/(2.0*temp));
     J = temp;
     double logJ = log(detbm1+1)/2.;
-    double logJd = detbm1d/(2.*(detbm1+1));
     double logJb = 0.0;
     double logJbd;
     double trace_e;
-    double trace_ed;
     double trace_eb;
     double trace_ebd;
-    MatTraceSymmetric_t_nodiff_d(e_sym, e_symd, &trace_e, &trace_ed);
-    temp = (J*J-1)/4 - logJ/2;
-    *lambdabd = *lambdabd + (*energyb)*(2*J*Jd/4-logJd/2) + temp*(*energybd);
-    *lambdab = *lambdab + temp*(*energyb);
-    Jbd = 2*(lambda*(*energyb)*Jd/4+J*((*energyb)*lambdad+lambda*(*energybd))/
-        4);
+    MatTraceSymmetric_t_nodiff_nodiff(e_sym, &trace_e);
+    *lambdab = *lambdab + ((J*J-1)/4-logJ/2)*(*energyb);
+    Jbd = (*energyb)*2*(lambda*Jd/4+J*lambdad/4);
     Jb = 2*J*lambda*(*energyb)/4;
-    temp = lambda/2 + mu;
-    logJbd = -((*energyb)*(lambdad/2+mud)+temp*(*energybd));
-    logJb = -(temp*(*energyb));
-    *mubd = *mubd + (*energyb)*(trace_ed-logJd) + (trace_e-logJ)*(*energybd);
+    logJbd = -((*energyb)*(lambdad/2+mud));
+    logJb = -((lambda/2+mu)*(*energyb));
     *mub = *mub + (trace_e-logJ)*(*energyb);
-    trace_ebd = (*energyb)*mud + mu*(*energybd);
+    trace_ebd = (*energyb)*mud;
     trace_eb = mu*(*energyb);
-    *energybd = 0.0;
     *energyb = 0.0;
-    double e_symb[6] = {0.};
-    double e_symbd[6] = {0.0};
-    for (ii1 = 0; ii1 < 6; ++ii1)
-        e_symbd[ii1] = 0.0;
     MatTraceSymmetric_t_b_d(e_sym, e_symb, e_symbd, &trace_e, &trace_eb, &
-                          trace_ebd);
+                            trace_ebd);
     if (detbm1 + 1 >= 0.0)
         fabs0 = detbm1 + 1;
     else
         fabs0 = -(detbm1+1);
     temp = sqrt(detbm1 + 1);
-    result1d = (fabs(detbm1 + 1) < TOL ? 0.0 : detbm1d/(2.0*temp));
+    result1d = (fabs(detbm1 + 1)  < TOL ? 0.0 : detbm1d/(2.0*temp));
     result1 = temp;
     temp = logJb/(2.*(detbm1+1));
     temp0 = logJb/(2.*(detbm1+1));
@@ -429,16 +469,45 @@ static inline void tau_symmetric_d(double e_sym[6], double e_symd[6], double tau
     for (ii1 = 0; ii1 < 6; ++ii1)
         e2_symbd[ii1] = 0.0;
     MatDetAM1Symmetric_t_b_d(e2_sym, e2_symd, e2_symb, e2_symbd, &detbm1, &
-                           detbm1b, &detbm1bd);
+                             detbm1b, &detbm1bd);
     for (int i = 5; i > -1; --i) {
         e_symbd[i] = e_symbd[i] + 2*e2_symbd[i];
         e_symb[i] = e_symb[i] + 2*e2_symb[i];
         e2_symbd[i] = 0.0;
         e2_symb[i] = 0.0;
     }
+}
+
+/*
+  Differentiation of compute_tau in forward (tangent) mode:
+   variations   of useful results: tau_sym[0:6-1]
+   with respect to varying inputs: tau_sym[0:6-1] e_sym[0:6-1]
+                lambda mu
+   RW status of diff variables: tau_sym:(loc) tau_sym[0:6-1]:in-out
+                e_sym:(loc) e_sym[0:6-1]:in lambda:in mu:in
+   Plus diff mem management of: tau_sym:in e_sym:in
+*/
+static inline void compute_dtau_sym_fwd_tapenade(const double e_sym[6], const double e_symd[6], const double lambda, const double lambdad,
+                                                 const double mu, const double mud, double tau_sym[6], double tau_symd[6]) {
+    double lambdab = 0.;
+    double mub = 0.;
+    double energy;
+    double energyb = 1.;
+    double grad_psi_sym[6] = {0.};
+    double grad_psi_symd[6] = {0.0};
+    int ii1;
+    int ii2;
+    for (int i = 0; i < 6; ++i) {
+        grad_psi_symd[i] = 0.0;
+        grad_psi_sym[i] = 0.;
+    }
+    for (ii1 = 0; ii1 < 6; ++ii1)
+        grad_psi_symd[ii1] = 0.0;
+    compute_grad_psi_d(e_sym, e_symd, grad_psi_sym, grad_psi_symd, lambda,
+                       lambdad, &lambdab, mu, mud, &mub, &energy, &energyb);
     for (int i = 3; i < 6; ++i) {
-        e_symbd[i] = e_symbd[i]/2.;
-        e_symb[i] /= 2.;
+        grad_psi_symd[i] = grad_psi_symd[i]/2.;
+        grad_psi_sym[i] /= 2.;
     }
     // b = 2 e + I
     double b_sym[6];
@@ -450,21 +519,21 @@ static inline void tau_symmetric_d(double e_sym[6], double e_symd[6], double tau
         b_sym[j] = 2*e_sym[j] + (j < 3);
     }
     // tau = (dPsi / de) b
-    double dPsi[3][3], b[3][3], tau[3][3];
-    double dPsid[3][3], bd[3][3], taud[3][3];
+    double grad_psi[3][3], b[3][3], tau[3][3];
+    double grad_psid[3][3], bd[3][3], taud[3][3];
     for (ii1 = 0; ii1 < 3; ++ii1)
         for (ii2 = 0; ii2 < 3; ++ii2)
-            dPsid[ii1][ii2] = 0.0;
-    SymmetricMatUnpack_d(e_symb, e_symbd, dPsi, dPsid);
+            grad_psid[ii1][ii2] = 0.0;
+    SymmetricMatUnpack_t_d(grad_psi_sym, grad_psi_symd, grad_psi, grad_psid);
     for (ii1 = 0; ii1 < 3; ++ii1)
         for (ii2 = 0; ii2 < 3; ++ii2)
             bd[ii1][ii2] = 0.0;
-    SymmetricMatUnpack_d(b_sym, b_symd, b, bd);
+    SymmetricMatUnpack_t_d(b_sym, b_symd, b, bd);
     for (ii1 = 0; ii1 < 3; ++ii1)
         for (ii2 = 0; ii2 < 3; ++ii2)
             taud[ii1][ii2] = 0.0;
-    MatMatMult_d(1., dPsi, dPsid, b, bd, tau, taud);
-    SymmetricMatPack_d(tau, taud, tau_sym, tau_symd);
+    MatMatMult_t_d(1., grad_psi, grad_psid, b, bd, tau, taud);
+    SymmetricMatPack_t_d(tau, taud, tau_sym, tau_symd);
 }
 
 #endif // TAPENADE_H

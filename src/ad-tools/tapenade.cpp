@@ -13,19 +13,29 @@ void free_tapenade(void *ctx) {
     delete context;
 }
 
+void tau_sym_ad(const double e_sym[6], const double lambda, const double mu, double tau_sym[6]) {
+  double lambdab = 0., mub = 0., energy, energyb = 1., grad_psi_sym[6] = {0.};
+  for (int i = 0; i < 6; i++) grad_psi_sym[i] = 0.;
+  compute_grad_psi_tapenade(e_sym, grad_psi_sym, lambda, &lambdab, mu, &mub, &energy, &energyb);
+  for (int i = 3; i < 6; i++) grad_psi_sym[i] /= 2.;
 
-void Kirchhofftau_sym_NeoHookean_AD_Tapenade(const double lambda, const double mu, double e_sym[6], double tau_sym[6]) {
-  double e_symb[6] = {0.}, lambdab = 0., mub = 0., energyb = 1.;
-  tau_symmetric(e_sym, e_symb, tau_sym, lambda, &lambdab, mu, &mub, &energyb);
+    // b = 2 e + I
+    double b_sym[6];
+    for (int j = 0; j < 6; j++) b_sym[j] = 2 * e_sym[j] + (j < 3);
+
+    // tau = (dPsi / de) b
+    double grad_psi[3][3], b[3][3], tau[3][3];
+    SymmetricMatUnpack_t(grad_psi_sym, grad_psi);
+    SymmetricMatUnpack_t(b_sym, b);
+    MatMatMult_t(1., grad_psi, b, tau);
+    SymmetricMatPack_t(tau, tau_sym);
 }
 
-void dtau_fwd_Tapenade(const double lambda, const double mu, double e_sym[6], double de_sym[6],
-                                         double tau_sym[6], double dtau_sym[6]) {
-  double e_symd[6] = {1.}, lambdad = 0., lambdab = 0., lambdabd = 0.,
-                           mud = 0., mub = 0., mubd = 0.,
-                           energyb = 1., energybd = 1.;
-  tau_symmetric_d(e_sym, e_symd, tau_sym, dtau_sym, lambda, lambdad, &lambdab, &lambdabd,
-                  mu, mud, &mub, &mubd, &energyb, &energybd);
+void dtau_sym_fwd(const double e_sym[6], const double de_sym[6],
+                                const double lambda, const double mu,
+                                double tau_sym[6], double dtau_sym[6]) {
+  const double lambdad = 0., mud = 0;
+  compute_dtau_sym_fwd_tapenade(e_sym, de_sym, lambda, lambdad, mu, mud, tau_sym, dtau_sym);
 }
 
 // Residual Evaluation
@@ -51,7 +61,7 @@ void f_tapenade(void *ctx, const double dXdx_initial[3][3], const double dudX[3]
 
   GreenEulerStrain(Grad_u, e_sym);
 
-  Kirchhofftau_sym_NeoHookean_AD_Tapenade(lambda, mu, e_sym, tau_sym);
+  tau_sym_ad(e_sym, lambda, mu, tau_sym);
   SymmetricMatUnpack(tau_sym, f1);
 
   // ------------------------------------------------------------------------
@@ -94,7 +104,7 @@ void df_tapenade(void *ctx, const double ddudX[3][3], double df1[3][3]) {
 
   GreenEulerStrain_fwd(grad_du, b, de_sym);
 
-  dtau_fwd_Tapenade(lambda, mu, e_sym, de_sym, tau_sym, dtau_sym);
+  dtau_sym_fwd(e_sym, de_sym, lambda, mu, tau_sym, dtau_sym);
 
   SymmetricMatUnpack(tau_sym, tau);
   SymmetricMatUnpack(dtau_sym, dtau);
