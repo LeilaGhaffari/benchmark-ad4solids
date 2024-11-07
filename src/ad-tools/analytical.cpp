@@ -48,16 +48,6 @@ void f_analytic(void *ctx, const double dXdx_initial[3][3], const double dudX[3]
     StoredValuesPack(0, 9, (double *)dXdx, stored_values);
     StoredValuesPack(9, 6, (double *)tau_sym, stored_values);
     StoredValuesPack(15, 1, &Jm1, stored_values);
-
-    // ------------------------------------------------------------------------
-    // More info
-    // ------------------------------------------------------------------------
-    printf("\n\ne =");
-    for (int i=0; i<6; i++) printf("\n\t%.12lf", e_sym[i]);
-    printf("\n\nStrain Energy from e = ");
-    printf(" %.12lf", StrainEnergy(e_sym, lambda, mu));
-    printf("\n\ntau =");
-    for (int i=0; i<6; i++) printf("\n\t%.12lf", tau_sym[i]);
 }
 
 void df_analytic(void *ctx, const double ddudX[3][3], double df1[3][3]){
@@ -92,14 +82,4 @@ void df_analytic(void *ctx, const double ddudX[3][3], double df1[3][3]){
     // df1 = dtau - tau * grad_du^T
     //     = grad_du*tau + F*dS*F^T
     MatMatAdd(1.0, grad_du_tau, 1., FdSFTranspose, df1);
-
-    // ------------------------------------------------------------------------
-    // More info
-    // ------------------------------------------------------------------------
-    printf("\n\ndf = \n");
-    for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) printf("\t%.12lf", df1[i][j]);
-        printf("\n");
-    }
-    printf("\n\n");
 }

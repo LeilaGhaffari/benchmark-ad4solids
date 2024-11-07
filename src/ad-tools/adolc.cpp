@@ -129,16 +129,6 @@ void f_adolc(void *ctx, const double dXdx_initial[3][3], const double dudX[3][3]
     StoredValuesPack(0, 9, (double *)dXdx, stored_values);
     StoredValuesPack(9, 6, (double *)e_sym, stored_values);
     StoredValuesPack(15, 6, (double *)gradPsi_sym, stored_values);
-
-    // ------------------------------------------------------------------------
-    // More info
-    // ------------------------------------------------------------------------
-    printf("\n\ne =");
-    for (int i=0; i<6; i++) printf("\n\t%.12lf", e_sym[i]);
-    printf("\n\nStrain Energy from e = ");
-    printf(" %.12lf", StrainEnergy(e_sym, context->lambda, context->mu));
-    printf("\n\ntau =");
-    for (int i=0; i<6; i++) printf("\n\t%.12lf", tau_sym[i]);
 }
 
 void df_adolc(void *ctx, const double ddudX[3][3], double df1[3][3]) {
@@ -211,18 +201,4 @@ void df_adolc(void *ctx, const double ddudX[3][3], double df1[3][3]) {
         df1[j][k] = dtau[j][k] - tau_grad_du[j][k];
       }
     }
-
-    // ------------------------------------------------------------------------
-    // More info
-    // ------------------------------------------------------------------------
-    //printf("\n\nde =");
-    //for (int i=0; i<6; i++) printf("\n\t%.12lf", de_sym[i]);
-    //printf("\n\ndtau =");
-    //for (int i=0; i<6; i++) printf("\n\t%.12lf", dtau_sym[i]);
-    printf("\n\ndf = \n");
-    for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) printf("\t%.12lf", df1[i][j]);
-        printf("\n");
-    }
-    printf("\n\n");
 }

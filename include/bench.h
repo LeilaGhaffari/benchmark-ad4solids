@@ -9,6 +9,13 @@
 #include "ad-tools/analytical.h"
 #include "ad-tools/tapenade.h"
 
+#define SETUP_BENCH(tool_name, context_type)    \
+    bench->ad_context = new context_type;       \
+    bench->init = init_##tool_name;             \
+    bench->free = free_##tool_name;             \
+    bench->f = f_##tool_name;                   \
+    bench->df = df_##tool_name;
+
 typedef struct Bench {
     void *ad_context;
     void (*init)(void *ctx);
@@ -19,29 +26,13 @@ typedef struct Bench {
 
 int bench_setup(Bench *bench, const char *tool) {
     if (strcmp(tool, "adolc") == 0) {
-        bench->ad_context = new AdolcContext;
-        bench->init = init_adolc;
-        bench->free = free_adolc;
-        bench->f = f_adolc;
-        bench->df = df_adolc;
+        SETUP_BENCH(adolc, AdolcContext);
     } else if (strcmp(tool, "enzyme") == 0) {
-        bench->ad_context = malloc(sizeof(EnzymeContext));
-        bench->init = init_enzyme;
-        bench->free = free_enzyme;
-        bench->f = f_enzyme;
-        bench->df = df_enzyme;
+        SETUP_BENCH(enzyme, EnzymeContext);
     } else if (strcmp(tool, "tapenade") == 0) {
-        bench->ad_context = new TapenadeContext;
-        bench->init = init_tapenade;
-        bench->free = free_tapenade;
-        bench->f = f_tapenade;
-        bench->df = df_tapenade;
+        SETUP_BENCH(tapenade, TapenadeContext);
     } else if (strcmp(tool, "analytical") == 0) {
-        bench->ad_context = new AnalyticContext;
-        bench->init = init_analytic;
-        bench->free = free_analytic;
-        bench->f = f_analytic;
-        bench->df = df_analytic;
+        SETUP_BENCH(analytic, AnalyticContext);
     } else {
         printf("Unknown model: %s\n", tool);
         printf("Valid options are: analytical, adolc, enzyme, and tapenade\n");
