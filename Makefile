@@ -12,12 +12,10 @@ FC = gfortran
 CFLAGS = $(OPT) -Wall -Wextra -Wunused-variable -Wunused-function -Iinclude
 CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
             -Wno-unused-parameter $(patsubst %,-I%,$(INCDIR) $(ADOLC_INCLUDE))
-FFLAGS = $(OPT) -fPIC -cpp -Wall -Wextra -Wno-unused-parameter \
-         -Wno-unused-dummy-argument -MMD -MP
 ifneq ($(ADOLC_LIB),)
     LDFLAGS += -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
 endif
-LDLIBS = -ladolc -lm -lgfortran  # Link against Fortran runtime
+LDLIBS = -ladolc -lm
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
 ifneq ($(ENZYME_LIB),)
@@ -34,15 +32,13 @@ BUILDTOOLSDIR = $(BUILDDIR)/ad-tools
 # Source files
 SOURCES_CXX = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(ADTOOLSDIR)/*.cpp)
 SOURCES_C = $(wildcard $(ADTOOLSDIR)/*.c)
-SOURCES_F90 = $(wildcard $(ADTOOLSDIR)/*.f90)
 
 # Object files
 OBJ_CXX = $(SOURCES_CXX:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
 OBJ_C = $(SOURCES_C:$(ADTOOLSDIR)/%.c=$(BUILDTOOLSDIR)/%.o)
-OBJ_F90 = $(SOURCES_F90:$(ADTOOLSDIR)/%.f90=$(BUILDTOOLSDIR)/%.o)
 
 # All object files
-OBJ = $(OBJ_CXX) $(OBJ_C) $(OBJ_F90)
+OBJ = $(OBJ_CXX) $(OBJ_C)
 
 # Executable name
 TARGET = $(BUILDDIR)/elasticity-exec
@@ -64,10 +60,6 @@ $(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.cpp | $(BUILDTOOLSDIR)
 # Compile C source files
 $(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.c | $(BUILDTOOLSDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compile Fortran source files
-$(BUILDTOOLSDIR)/%.o: $(ADTOOLSDIR)/%.f90 | $(BUILDTOOLSDIR)
-	$(FC) $(FFLAGS) -c $< -o $@
 
 # Ensure necessary directories exist
 $(BUILDDIR):
