@@ -9,11 +9,12 @@
 
 int main(int argc, char *argv[]) {
   // Define the AD tools
-  std::vector<std::string> ad_tools = {"analytical", "adolc", "enzyme", "tapenade"};
+  std::vector<std::string> ad_tools = {"analytical", "enzyme", "tapenade", "adolc"};
 
   // File setup
   std::string filename = "random-data.csv";
   int mat_elem = 9, Q = QuadraturePointsNumber(filename);
+  std::cout << "\nQuadrature Points = "<<Q<<"\n\n";
 
   // Allocate 2D arrays
   std::vector<std::vector<double>> dXdx_init(mat_elem, std::vector<double>(Q));
