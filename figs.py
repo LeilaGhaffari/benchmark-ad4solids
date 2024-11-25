@@ -31,43 +31,54 @@ def reverse_mode(x, y):
     df_dy = df_dz2 * dz2_dy
     return df_dx, df_dy
 
-# Plot computational graphs
 def plot_computational_graph():
     # Forward Mode Graph
     forward_graph = nx.DiGraph()
     forward_graph.add_edges_from([
-        ("x", "x^2"),
-        ("x^2", "x^2 * y"),
-        ("y", "x^2 * y"),
-        ("x", "sin(x)"),
-        ("sin(x)", "f"),
-        ("x^2 * y", "f"),
+        ("x", "pow2"),
+        ("pow2", "*"),
+        ("y", "*"),
+        ("x", "sin"),
+        ("sin", "+"),
+        ("*", "+"),
+        ("+", "f"),
     ])
 
     pos = {
-        "f": (1, 2),
-        "sin(x)": (.5, 1),
-        "x^2 * y": (1.5, 1),
-        "x^2": (1.25, 0),
+        "f": (1, 8.5),
+        "+": (1, 6),
+        "sin": (.5, 1),
+        "*": (1.5, 1),
+        "pow2": (1, 0),
         "x": (0.25, -1),
-        "y": (2.25, -1),
+        "y": (2, -1),
     }
 
-    # Draw nodes and edges
+    # Define node colors
+    node_colors = []
+    for node in forward_graph.nodes:
+        if node == "f":
+            node_colors.append("lightgreen")
+        elif node == "x" or node == "y":
+            node_colors.append("orange")
+        else:
+            node_colors.append("skyblue")
+
+    # Draw nodes and edges for Forward Mode
     nx.draw(
-        forward_graph, pos, with_labels=True, node_color='skyblue', edge_color='black',
+        forward_graph, pos, with_labels=True, node_color=node_colors, edge_color='black',
         node_size=3000, font_size=10, font_weight='bold', arrowsize=20
     )
 
     nx.draw_networkx_edge_labels(
         forward_graph, pos,
         edge_labels={
-            ("x", "x^2"): "2x",
-            ("x^2", "x^2 * y"): "y",
-            ("y", "x^2 * y"): "x^2",
-            ("x", "sin(x)"): "cos(x)",
-            ("sin(x)", "f"): "1",
-            ("x^2 * y", "f"): "1",
+            ("x", "pow2"): "$\dot{x}$",
+            ("pow2", "*"): "2x $\dot{x}$",
+            ("y", "*"): "$\dot{y}$",
+            ("x", "sin"): "$\dot{x}$",
+            ("sin", "+"): "cos(x) $\dot{x}$",
+            ("*", "+"): "2x$\dot{x}$y + pow2(x) $\dot{y}$",
         },
         font_color='red'
     )
@@ -79,29 +90,39 @@ def plot_computational_graph():
     # Reverse Mode Graph
     reverse_graph = nx.DiGraph()
     reverse_graph.add_edges_from([
-        ("f", "sin(x)"),
-        ("f", "x^2 * y"),
-        ("sin(x)", "x"),
-        ("x^2 * y", "x^2"),
-        ("x^2 * y", "y"),
-        ("x^2", "x"),
+        ("f", "+"),
+        ("+", "sin"),
+        ("+", "*"),
+        ("sin", "x"),
+        ("*", "pow2"),
+        ("*", "y"),
+        ("pow2", "x"),
     ])
 
+        # Define node colors for Reverse Mode
+    node_colors_reverse = []
+    for node in reverse_graph.nodes:
+        if node == "f":
+            node_colors_reverse.append("orange")
+        elif node == "x" or node == "y":
+            node_colors_reverse.append("lightgreen")
+        else:
+            node_colors_reverse.append("skyblue")
 
     nx.draw(
-        reverse_graph, pos, with_labels=True, node_color='lightgreen', edge_color='black',
+        reverse_graph, pos, with_labels=True, node_color=node_colors_reverse, edge_color='black',
         node_size=3000, font_size=10, font_weight='bold', arrowsize=20
     )
 
     nx.draw_networkx_edge_labels(
         reverse_graph, pos,
         edge_labels={
-            ("f", "sin(x)"): "1",
-            ("f", "x^2 * y"): "1",
-            ("sin(x)", "x"): "cos(x)",
-            ("x^2 * y", "x^2"): "y",
-            ("x^2 * y", "y"): "x^2",
-            ("x^2", "x"): "2x",
+            ("+", "sin"): "1",
+            ("+", "*"): "1",
+            ("sin", "x"): "cos(x)",
+            ("*", "pow2"): "y",
+            ("*", "y"): "pow2",
+            ("pow2", "x"): "2x",
         },
         font_color='red'
     )
@@ -109,6 +130,7 @@ def plot_computational_graph():
     plt.tight_layout()
     plt.savefig("reverse_mode_graph.png")
     plt.close()
+
 
 # Run computations and plot graphs
 if __name__ == "__main__":
