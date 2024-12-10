@@ -1,6 +1,48 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 
+def plot_ast_graph():
+    ast_graph = nx.DiGraph()
+    ast_graph.add_edges_from([
+        ("x", "pow2"),
+        ("pow2", "*"),
+        ("y", "*"),
+        ("x", "sin"),
+        ("sin", "+"),
+        ("*", "+"),
+        ("+", "f"),
+    ])
+
+    pos = {
+        "f": (1, 10),
+        "+": (1, 5),
+        "sin": (.5, 2),
+        "*": (1.5, 2),
+        "pow2": (1, -.5),
+        "x": (0.25, -1),
+        "y": (2, -1),
+    }
+
+    node_colors = []
+    for node in ast_graph.nodes:
+        if node == "f":
+            node_colors.append("lightgreen")
+        elif node == "x" or node == "y":
+            node_colors.append("orange")
+        else:
+            node_colors.append("skyblue")
+
+    nx.draw(
+        ast_graph, pos, with_labels=True, node_color=node_colors, edge_color='black',
+        node_size=3000, font_size=10, font_weight='bold', arrowsize=20
+    )
+
+    plt.title("Abstract Syntax Tree (AST)", fontsize=14)
+    plt.tight_layout()
+    plt.savefig("ast_graph.png")
+    plt.close()
+
+
 def plot_computational_graph():
     forward_graph = nx.DiGraph()
     forward_graph.add_edges_from([
@@ -46,7 +88,7 @@ def plot_computational_graph():
             ("x", "sin"): "$dx$",
             ("sin", "+"): "$dz_3=cos(x)dx$",
             ("*", "+"): "$dz_2=dz_1y+x^2 dy$",
-            ("+", "f"): "$\dot{f}=dz_2+dz_3$",
+            ("+", "f"): "$df=dz_2+dz_3$",
         },
         font_color='red',
         label_pos=0.5,
@@ -117,4 +159,6 @@ def plot_computational_graph():
 
 if __name__ == "__main__":
     plot_computational_graph()
-    print("Computational graphs saved as 'forward_mode_graph.png' and 'reverse_mode_graph.png'.")
+    plot_ast_graph()
+    print("Computational graphs saved as 'forward_mode_graph.png', 'reverse_mode_graph.png', and 'ast_graph.png'.")
+
