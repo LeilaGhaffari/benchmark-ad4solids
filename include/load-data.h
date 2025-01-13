@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <cmath>
 
 using namespace std;
 
@@ -90,6 +91,17 @@ int QuadraturePointsNumber(const string& filename) {
 
     file.close();
     return row_count/9;
+}
+
+double ComputeError(const double f[3][3], const double f_analytical[3][3]) {
+    double error = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            double diff = f[i][j] - f_analytical[i][j];
+            error += diff * diff;
+        }
+    }
+    return std::sqrt(error);
 }
 
 #endif // LOAD_DATA_H
