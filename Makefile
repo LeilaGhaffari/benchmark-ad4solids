@@ -1,5 +1,5 @@
 # Variables for Rust library
-RUST_LIB_DIR ?= /home/leila/git/benchmark-ad4solids/src/ad-tools/enzyme-rust/target/release
+RUST_LIB_DIR ?= $(abspath src/ad-tools/enzyme-rust/target/release)
 RUST_LIB = $(RUST_LIB_DIR)/libenzyme_rust.so
 
 # Variables for Enzyme, ADOL-C, and Tapenade paths
@@ -53,7 +53,7 @@ all: $(TARGET)
 
 # Build the Rust library
 $(RUST_LIB):
-	cd $(dir $@) && cargo build --release
+	cd $(dir $@) && cargo +enzyme build --release
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) $(RUST_LIB) | $(BUILDDIR)
