@@ -1,3 +1,7 @@
+# Variables for Rust library
+RUST_LIB_DIR ?= /home/leila/git/benchmark-ad4solids/src/ad-tools/enzyme-rust/target/release
+RUST_LIB = $(RUST_LIB_DIR)/libenzyme_rust.so
+
 # Variables for Enzyme, ADOL-C, and Tapenade paths
 ENZYME_LIB ?=
 ADOLC_INCLUDE ?=
@@ -15,7 +19,8 @@ CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
 ifneq ($(ADOLC_LIB),)
     LDFLAGS += -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
 endif
-LDLIBS = -ladolc -lm
+LDFLAGS += -L$(RUST_LIB_DIR) -Wl,-rpath,$(RUST_LIB_DIR)
+LDLIBS = -ladolc -lm -lenzyme_rust
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
 ifneq ($(ENZYME_LIB),)
@@ -46,8 +51,12 @@ TARGET = $(BUILDDIR)/elasticity-exec
 # Default target
 all: $(TARGET)
 
+# Build the Rust library
+$(RUST_LIB):
+	cd $(dir $@) && cargo build --release
+
 # Link object files to create the single executable
-$(TARGET): $(OBJ) | $(BUILDDIR)
+$(TARGET): $(OBJ) $(RUST_LIB) | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 # Compile C++ source files
@@ -71,6 +80,7 @@ $(BUILDTOOLSDIR):
 # Clean up build artifacts
 clean:
 	rm -f $(BUILDDIR)/*.o $(BUILDTOOLSDIR)/*.o $(TARGET)
+	rm -f $(RUST_LIB_DIR)/*.so
 
 print-% :
 	$(info [ variable name]: $*)

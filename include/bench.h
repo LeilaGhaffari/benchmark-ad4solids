@@ -6,6 +6,7 @@
 #include <string.h>
 #include "ad-tools/adolc.h"
 #include "ad-tools/enzyme.h"
+#include "ad-tools/enzyme-rust.h"
 #include "ad-tools/analytical.h"
 #include "ad-tools/tapenade.h"
 
@@ -27,15 +28,17 @@ typedef struct Bench {
 int bench_setup(Bench *bench, const char *tool) {
     if (strcmp(tool, "adolc") == 0) {
         SETUP_BENCH(adolc, AdolcContext);
-    } else if (strcmp(tool, "enzyme") == 0) {
+    } else if (strcmp(tool, "enzyme-c") == 0) {
         SETUP_BENCH(enzyme, EnzymeContext);
+    } else if (strcmp(tool, "enzyme-rust") == 0) {
+        SETUP_BENCH(enzyme_rust, EnzymeRustContext);
     } else if (strcmp(tool, "tapenade") == 0) {
         SETUP_BENCH(tapenade, TapenadeContext);
     } else if (strcmp(tool, "analytical") == 0) {
         SETUP_BENCH(analytic, AnalyticContext);
     } else {
         printf("Unknown model: %s\n", tool);
-        printf("Valid options are: analytical, adolc, enzyme, and tapenade\n");
+        printf("Valid options are: analytical, adolc, enzyme-c, enzyme-rust, and tapenade\n");
         return 1;
     }
     return 0;

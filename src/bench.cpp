@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]) {
   // Define the AD tools
-  std::vector<std::string> ad_tools = {"analytical", "enzyme", "tapenade", "adolc"};
+  std::vector<std::string> ad_tools = {"analytical", "enzyme-c", "enzyme-rust", "tapenade", "adolc"};
 
   // File setup
   std::string filename = "random-data.csv";
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   // Print header
   int tool_width = 15, time_width = 10;
   std::cout << std::left << std::setw(tool_width) << "AD Tool" << std::setw(time_width) << "Time (s)" << std::endl;
-  std::cout << std::string(tool_width + time_width, '-') << std::endl;
+  std::cout << std::string(tool_width + time_width + 1, '-') << std::endl;
 
   double dXdx_init_loc[3][3], dudX_loc[3][3], ddudX_loc[3][3];
   for (const auto& ad_tool : ad_tools) {
@@ -42,20 +42,17 @@ int main(int argc, char *argv[]) {
 
     // Process each quadrature point
     for (int i = 0; i < Q; i++) {
-      double df[3][3], f[3][3];
+      double f[3][3]; // df[3][3];
       PackMatrix(i, dXdx_init, dXdx_init_loc);
       PackMatrix(i, dudX, dudX_loc);
       PackMatrix(i, ddudX, ddudX_loc);
 
       bench.f(bench.ad_context, dXdx_init_loc, dudX_loc, f);
-      bench.df(bench.ad_context, ddudX_loc, df);
+      //bench.df(bench.ad_context, ddudX_loc, df);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
-
-    // Calculate error
-    //double error = CalculateError();
 
     // Print
     std::cout << std::left << std::setw(tool_width) << ad_tool << std::setw(time_width) << elapsed.count() << std::endl;

@@ -1,0 +1,18 @@
+[package]
+name = "enzyme_rust"
+version = "0.1.0"
+edition = "2021"
+
+[profile.test]
+lto = "fat"
+
+[profile.dev]
+lto = "fat"
+
+[profile.release]
+lto = "fat"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
