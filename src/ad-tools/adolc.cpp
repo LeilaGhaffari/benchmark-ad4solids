@@ -43,7 +43,11 @@ adouble StrainEnergy_NeoHookeanCurrentAD_ADOLC(adouble e_sym[6], const double la
     for (int i = 0; i < 6; i++) E2_sym[i] = 2 * e_sym[i];
     adouble detCm1 = MatDetAM1Symmetric(E2_sym);
     adouble J = sqrt(detCm1 + 1);
-    adouble logJ = Log1pSeries(detCm1) / 2.;
+    // ADOL-C produces wrong derivatives with Log1pSeries,
+    //   log1p is not overloaded for adouble, and
+    //   it does not support defining custom derivatives,
+    //   so we have to use the log function.
+    adouble logJ = log(detCm1 + 1) / 2.; // Log1pSeries(detCm1) / 2.;
     adouble traceE = MatTraceSymmetric(e_sym);
     return lambda * (J * J - 1) / 4 - lambda * logJ / 2 + mu * (-logJ + traceE);
 }
