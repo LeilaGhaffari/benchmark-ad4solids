@@ -117,6 +117,12 @@ impl KM {
         ]
     }
 
+    pub fn to_voigt(&self) -> [f64; 6] {
+        let d = 2.0_f64.sqrt();
+        let v = &self.vals;
+        [v[0], v[1], v[2], v[3]/d, v[4]/d, v[5]/d]
+    }
+
     // Stably evaluate e = (F F^T - I)/2 from displacement gradient H = F - I.
     pub fn green_euler(H: Mat3x3) -> Self {
         Self::from_matrix(H) + 0.5 * Self::from_matrix(matmul(&H, false, &H, true))
@@ -274,27 +280,23 @@ pub mod analytic {
 
 #[no_mangle]
 pub extern "C" fn compute_stress(
-    youngs_modulus: f64,
-    poisson_ratio: f64,
+    lambda: f64,
+    mu: f64,
     e_voigt: *const f64,
     tau_out: *mut f64,
 ) {
     unsafe {
-        let nh = NH::from_youngs(youngs_modulus, poisson_ratio);
+        let nh = NH::from_lame(lambda, mu);
 
         // Convert raw pointer to fixed-size array
         let e_slice = std::slice::from_raw_parts(e_voigt, 6);
         let e_array: &[f64; 6] = e_slice.try_into().expect("Expected a slice of length 6");
         let e = KM::from_voigt(e_array);
-
-        // Prepare output
         let mut tau = KM::zero();
-
-        // Call the `stress_enz` function
         stress_enz(&e, &nh, &mut tau);
 
-        // Write output `tau` back as a Voigt array
-        let tau_slice = tau.vals;
+        // Write tau back as a Voigt array
+        let tau_slice = KM::to_voigt(&tau);
         std::ptr::copy_nonoverlapping(tau_slice.as_ptr(), tau_out, 6);
     }
 }
