@@ -1,5 +1,5 @@
 #include "../include/bench.h"
-#include "../include/load-data.h"
+#include "../include/get-data.h"
 
 int main(int argc, char *argv[]) {
   // AD tools

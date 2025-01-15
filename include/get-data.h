@@ -1,5 +1,5 @@
-#ifndef LOAD_DATA_H
-#define LOAD_DATA_H
+#ifndef GET_DATA_H
+#define GET_DATA_H
 
 void PackMatrix(int i, const std::vector<std::vector<double>>& stored, double local[3][3]) {
     local[0][0] = stored[0][i];
@@ -180,4 +180,4 @@ void ComputeAndDisplayErrors(const std::string &analytical,
     bench_ref.free(bench_ref.ad_context);
 }
 
-#endif // LOAD_DATA_H
+#endif // GET_DATA_H
