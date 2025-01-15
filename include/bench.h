@@ -1,9 +1,15 @@
 #ifndef BENCH_H
 #define BENCH_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <chrono>
+#include <iomanip>
+#include <cmath>
+#include <cstring>
 #include "ad-tools/adolc.h"
 #include "ad-tools/enzyme.h"
 #include "ad-tools/enzyme-rust.h"
