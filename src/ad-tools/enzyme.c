@@ -30,7 +30,7 @@ double  StrainEnergy_NeoHookeanCurrentAD_Enzyme(double e_sym[6], double lambda, 
   return lambda * (J * J - 1) / 4 - lambda * logJ / 2 + mu * (-logJ + trace_e);
 }
 
-//void *__enzyme_function_like[2] = {(void *)Log1pSeries, (void *)"log1p"};
+void *__enzyme_function_like[2] = {(void *)Log1pSeries, (void *)"log1p"};
 
 void Kirchhofftau_sym_NeoHookean_AD_Enzyme(const double lambda, const double mu, double e_sym[6], double tau_sym[6]) {
   double dPsi_sym[6] = {0.}, b_sym[6], dPsi[3][3], b[3][3], tau[3][3];
