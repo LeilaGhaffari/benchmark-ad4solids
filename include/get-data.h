@@ -167,7 +167,7 @@ void ComputeAndDisplayErrors(const std::vector<std::string> &ad_tools, int Q,
                     f_total_error += ComputeError(f, f_ref);
                 } else if (operation == "df") {
                     bench.df(bench.ad_context, ddudX_loc, df);
-                    bench_ref.df(bench.ad_context, ddudX_loc, df_ref);
+                    bench_ref.df(bench_ref.ad_context, ddudX_loc, df_ref);
                     f_total_error += ComputeError(df, df_ref);
                 } else {
                     std::cerr << "Invalid operation specified: " << operation << std::endl;
