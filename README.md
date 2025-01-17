@@ -6,7 +6,7 @@ The AD tools used in this benchmark suit are:
 
 *   ADOL-C
 *   Tapenade
-*   Enzyme (C)
+*   Enzyme (C & Rust)
 
 in addition to the hand-coded implementation of the *Neo-Hookean Hyper-elasticity* model in current configuration.
 
