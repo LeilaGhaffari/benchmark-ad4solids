@@ -1,4 +1,4 @@
-# benchmark-ad4solids
+# ADBenchSolids
 
 This is a benchmark test for various Automatic Differentiation (AD) tools for deriving constitutive models in solid mechanics.
 
