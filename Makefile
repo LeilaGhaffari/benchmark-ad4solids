@@ -1,6 +1,6 @@
 # Variables for Rust library
 RUST_LIB_DIR ?= $(abspath target/release)
-RUST_LIB = $(RUST_LIB_DIR)/libenzyme_rust.so
+RUST_LIB = $(RUST_LIB_DIR)/libenzyme_rust.a
 
 # Variables for Enzyme, ADOL-C, and Tapenade paths
 ENZYME_LIB ?=
@@ -24,7 +24,7 @@ CXXFLAGS = $(OPT) -std=c++11 -Wall -Wextra -Wunused-variable -Wunused-function \
 ifneq ($(ADOLC_LIB),)
     LDFLAGS += -L$(ADOLC_LIB) -Wl,-rpath,$(ADOLC_LIB)
 endif
-LDFLAGS += -L$(RUST_LIB_DIR) -Wl,-rpath,$(RUST_LIB_DIR)
+LDFLAGS += -L$(RUST_LIB_DIR)
 LDLIBS = -ladolc -lm -lenzyme_rust
 
 # Add Enzyme-specific flags if ENZYME_LIB is defined
