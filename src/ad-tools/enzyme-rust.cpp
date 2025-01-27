@@ -23,7 +23,7 @@ void f_enzyme_rust(void *ctx, const double dXdx_initial[3][3], const double dudX
   const EnzymeRustContext *context = (EnzymeRustContext *)ctx;
   const double mu = context->mu;
   const double lambda = context->lambda;
-  double *stored_values = context->stored;
+  double *stored_values = context->stored; // TODO: move up to argument
 
   double Grad_u[3][3], F_inv[3][3], tau_sym[6], dXdx[3][3], e_sym[6];
 

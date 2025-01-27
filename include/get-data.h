@@ -109,7 +109,7 @@ void TimeAndDisplayOperation(const std::vector<std::string> &ad_tools,
             }
             bench.init(bench.ad_context);
             auto start_time = std::chrono::high_resolution_clock::now();
-            for (int i = 0; i < Q; i++) {
+            for (int i = 0; i < Q; i++) { // TODO: call at coarse granularity; move this loop inside
                 double f[3][3], df[3][3];
                 PackMatrix(i, dXdx_init, dXdx_init_loc);
                 PackMatrix(i, dudX, dudX_loc);
