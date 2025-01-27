@@ -1,5 +1,5 @@
 # Variables for Rust library
-RUST_LIB_DIR ?= $(abspath src/ad-tools/enzyme-rust/target/release)
+RUST_LIB_DIR ?= $(abspath target/release)
 RUST_LIB = $(RUST_LIB_DIR)/libenzyme_rust.so
 
 # Variables for Enzyme, ADOL-C, and Tapenade paths
@@ -7,8 +7,13 @@ ENZYME_LIB ?=
 ADOLC_INCLUDE ?=
 ADOLC_LIB ?=
 
+RUSTC = $(realpath $(shell rustup +enzyme which rustc))
+RUSTC_DIR = $(abspath $(dir $(RUSTC))../..)
+RUSTC_LLVM = $(RUSTC_DIR)/llvm/bin
+ENZYME_LIB = $(wildcard $(RUSTC_DIR)/enzyme/lib/ClangEnzyme-*.so)
+
 # Compilers
-CC = clang-18
+CC = $(RUSTC_LLVM)/clang
 CXX = g++
 FC = gfortran
 
@@ -53,7 +58,7 @@ all: $(TARGET)
 
 # Build the Rust library
 $(RUST_LIB):
-	cd $(dir $@) && cargo +enzyme build --release
+	cargo +enzyme build --release
 
 # Link object files to create the single executable
 $(TARGET): $(OBJ) $(RUST_LIB) | $(BUILDDIR)
@@ -80,7 +85,7 @@ $(BUILDTOOLSDIR):
 # Clean up build artifacts
 clean:
 	rm -f $(BUILDDIR)/*.o $(BUILDTOOLSDIR)/*.o $(TARGET)
-	rm -f $(RUST_LIB_DIR)/*.so
+	cargo +enzyme clean
 
 print-% :
 	$(info [ variable name]: $*)
