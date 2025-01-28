@@ -63,7 +63,7 @@ void GetData(const std::string& filename, std::vector<std::vector<double>>& dXdx
 int QuadraturePointsNumber(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Unable to open file\n";
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
