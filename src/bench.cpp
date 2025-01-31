@@ -28,24 +28,24 @@ int main(int argc, char *argv[]) {
   std::cout << std::string(tool_width + time_width + 1, '-') << std::endl;
   TimeAndDisplayOperation(ad_tools, Q, dXdx_init, dudX, ddudX, "f");
 
-  // std::cout << std::left << std::setw(tool_width) << "AD Tool"
-  //           << std::setw(error_width) << "Error" << std::endl;
-  // std::cout << std::string(tool_width + error_width + 5, '-') << std::endl;
-  // ComputeAndDisplayErrors(ad_tools, Q, dXdx_init, dudX, ddudX, "f");
+  std::cout << std::left << std::setw(tool_width) << "AD Tool"
+            << std::setw(error_width) << "Error" << std::endl;
+  std::cout << std::string(tool_width + error_width + 5, '-') << std::endl;
+  ComputeAndDisplayErrors(ad_tools, Q, dXdx_init, dudX, ddudX, "f");
 
-  // // Jacobian evaluation - Time and Error
-  // std::cout << std::string(tool_width + time_width + 1, '*') << std::endl
-  //           << "          Jacobian\n"
-  //           << std::string(tool_width + time_width + 1, '*') << std::endl;
-  // std::cout << std::left << std::setw(tool_width) << "AD Tool"
-  //           << std::setw(time_width) << "Time (s)" << std::endl;
-  // std::cout << std::string(tool_width + time_width + 1, '-') << std::endl;
-  // TimeAndDisplayOperation(ad_tools, Q, dXdx_init, dudX, ddudX, "df");
+  // Jacobian evaluation - Time and Error
+  std::cout << std::string(tool_width + time_width + 1, '*') << std::endl
+            << "          Jacobian\n"
+            << std::string(tool_width + time_width + 1, '*') << std::endl;
+  std::cout << std::left << std::setw(tool_width) << "AD Tool"
+            << std::setw(time_width) << "Time (s)" << std::endl;
+  std::cout << std::string(tool_width + time_width + 1, '-') << std::endl;
+  TimeAndDisplayOperation(ad_tools, Q, dXdx_init, dudX, ddudX, "df");
 
-  // std::cout << std::left << std::setw(tool_width) << "AD Tool"
-  //           << std::setw(error_width) << "Error" << std::endl;
-  // std::cout << std::string(tool_width + error_width + 5, '-') << std::endl;
-  // ComputeAndDisplayErrors(ad_tools, Q, dXdx_init, dudX, ddudX, "df");
+  std::cout << std::left << std::setw(tool_width) << "AD Tool"
+            << std::setw(error_width) << "Error" << std::endl;
+  std::cout << std::string(tool_width + error_width + 5, '-') << std::endl;
+  ComputeAndDisplayErrors(ad_tools, Q, dXdx_init, dudX, ddudX, "df");
 
   return 0;
 }
